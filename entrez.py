@@ -8,8 +8,10 @@ Entrez.email = 'annalifousi@gmail.com'
 Entrez.tool = 'Demoscript'
 
 # Define the query
-query = '("EDC"[Title/Abstract] or "endocrine disrupting chemicals"[Title/Abstract] and "receptors"[Title/Abstract])'
-
+#query = '("EDC"[Title/Abstract] or "endocrine disrupting chemicals"[Title/Abstract] and "receptors"[Title/Abstract])'
+#query = '("endocrine disrupting chemicals"[Title/Abstract] and "receptors"[Title/Abstract])'
+#query = '("EDC"[Title/Abstract] or "endocrine disrupting chemicals"[Title/Abstract] and "receptors"[Title/Abstract] or "receptor"[Title/Abstract])'
+query = '("EDC"[Title/Abstract] or "endocrine disrupting chemicals"[Title/Abstract] and "receptors"[Title/Abstract] or "receptor"[Title/Abstract])'
 # Searching for the query in Entrez
 info = Entrez.esearch(db="pubmed", retmax=100000, term=query)
 # Parsing the XML data
@@ -24,9 +26,8 @@ fetch = Entrez.efetch(db='pubmed',
                       id=record['IdList'],
                       rettype='full')
 
-# Determine the current working directory and file path for XML
-current_dir = os.getcwd()
-file_path = os.path.join(current_dir, 'venv/articles_tool.xml')
+# Determine the file path for XML
+file_path = '/Users/annalifousihotmailcom/python/DTU Biobuilders/venv/articles_tool.xml'
 
 # Write records in XML file
 with open(file_path, 'wb') as f:
@@ -39,7 +40,7 @@ print(f'Number of articles returned: {num_articles}')
 print(f'The file has been saved to: {file_path}')
 
 # Define the Excel file path
-excel_file_path = os.path.join(current_dir, 'venv/query_results.xlsx')
+excel_file_path = '/Users/annalifousihotmailcom/python/DTU Biobuilders/venv/query_results.xlsx'
 
 # Create a new Excel workbook if it doesn't exist, otherwise load it
 if not os.path.exists(excel_file_path):
@@ -51,8 +52,19 @@ else:
     wb = openpyxl.load_workbook(excel_file_path)
     ws = wb.active
 
-# Append the new query and number of articles to the workbook
-ws.append([query, num_articles])
+# Check the last entry to avoid duplication
+last_row = ws.max_row
+if last_row > 1:  # Ensure there's more than just the header
+    last_query = ws.cell(row=last_row, column=1).value
+    last_num_articles = ws.cell(row=last_row, column=2).value
+    if last_query == query and last_num_articles == num_articles:
+        print("The query and number of articles are the same as the last entry. No new entry added.")
+    else:
+        ws.append([query, num_articles])
+        print(f'New entry added: {query} - {num_articles}')
+else:
+    ws.append([query, num_articles])
+    print(f'New entry added: {query} - {num_articles}')
 
 # Save the workbook
 wb.save(excel_file_path)
