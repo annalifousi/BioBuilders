@@ -11,7 +11,14 @@ Entrez.tool = 'Demoscript'
 #query = '("EDC"[Title/Abstract] or "endocrine disrupting chemicals"[Title/Abstract] and "receptors"[Title/Abstract])'
 #query = '("endocrine disrupting chemicals"[Title/Abstract] and "receptors"[Title/Abstract])'
 #query = '("EDC"[Title/Abstract] or "endocrine disrupting chemicals"[Title/Abstract] and "receptors"[Title/Abstract] or "receptor"[Title/Abstract])'
-query = '("EDC"[Title/Abstract] or "endocrine disrupting chemicals"[Title/Abstract] and "receptors"[Title/Abstract] or "receptor"[Title/Abstract])'
+#query = '("EDC"[Title/Abstract] or "endocrine disrupting chemicals"[Title/Abstract] and "receptors"[Title/Abstract] or "receptor"[Title/Abstract])'
+#query = '("Endocrine Disruptors"[MeSH Terms] OR "endocrine disrupting chemicals"[Title/Abstract] AND "receptors"[Title/Abstract] OR "receptor"[Title/Abstract]) NOT review[Publication Type]'
+query = ('("Endocrine Disruptors"[MeSH Terms] OR "endocrine disrupting chemicals"[Title/Abstract] OR "EDC"[Title/Abstract]) '
+         'AND ("Receptors, Endocrine"[MeSH Terms] OR "receptors"[Title/Abstract] OR "receptor"[Title/Abstract]) '
+         'AND ("binding"[Title/Abstract] OR "interaction"[Title/Abstract] OR "affinity"[Title/Abstract] OR "assay"[Title/Abstract] OR "experiment"[Title/Abstract]) '
+         'NOT review[Publication Type]')
+
+
 # Searching for the query in Entrez
 info = Entrez.esearch(db="pubmed", retmax=100000, term=query)
 # Parsing the XML data
