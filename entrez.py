@@ -133,19 +133,49 @@ def parse_xml_to_csv(xml_path, csv_path):
     print(f'Number of articles with available PMC ID: {pmc_count}')
     return pmc_count
 
-
+'''
 # Entrez searching/ getting xml file with articles
-query = ('("Endocrine Disruptors"[MeSH Terms] OR "endocrine disrupting chemicals"[Title/Abstract] OR "EDC"[Title/Abstract]) '
+query1 = ('("Endocrine Disruptors"[MeSH Terms] OR "endocrine disrupting chemicals"[Title/Abstract] OR "EDC"[Title/Abstract]) '
          'AND ("Receptors, Endocrine"[MeSH Terms] OR "receptors"[Title/Abstract] OR "receptor"[Title/Abstract]) '
          'AND ("binding"[Title/Abstract] OR "interaction"[Title/Abstract] OR "affinity"[Title/Abstract] OR "assay"[Title/Abstract] OR "experiment"[Title/Abstract]) '
          'NOT review[Publication Type]')
-xml_path = '/Users/annalifousihotmailcom/python/DTU Biobuilders/articles_tool.xml'
-excel_path = '/Users/annalifousihotmailcom/python/DTU Biobuilders/query_results.xlsx'
+'''
 
-search_entrez_and_save(query, xml_path, excel_path)
+
+# Entrez searching/ getting xml file with articles
+query2 = (
+    '("Endocrine Disruptors"[MeSH Terms] OR "endocrine disrupting chemicals"[Title/Abstract] OR "EDCs"[Title/Abstract] OR "hormonally active agents"[Title/Abstract] OR "Endocrine disrupting compounds"[Title/Abstract]) '
+    'AND (human[Title/Abstract]) '
+    'AND ("Receptors, Endocrine"[MeSH Terms] OR "receptors"[Title/Abstract] OR "receptor"[Title/Abstract] OR target[Title/Abstract]) '
+    'AND ('
+        '("human estrogen receptor alpha"[Title/Abstract] OR "HERa"[Title/Abstract] OR "Estrogen"[Title/Abstract] OR target[Title/Abstract]) '
+        'OR "estradiol"[Title/Abstract] '
+        'OR ("HERb"[Title/Abstract] OR "Human estrogen receptor beta"[Title/Abstract]) '
+        'OR ("binding"[Title/Abstract] AND ("Human androgen receptor"[Title/Abstract] OR "HAR"[Title/Abstract] OR "Testosterone"[Title/Abstract])) '
+        'OR ("NR3C1"[Title/Abstract] OR "Human glucocorticoid receptor"[Title/Abstract]) '
+        'OR "Dexamethasone"[Title/Abstract] '
+        'OR ("Human mineralocorticoid receptor"[Title/Abstract] OR "Aldosterone"[Title/Abstract] OR "NR3C2"[Title/Abstract]) '
+        'OR ("Progesterone"[Title/Abstract] OR "NR3C3"[Title/Abstract] OR "Human progesterone receptor"[Title/Abstract]) '
+    ') '
+    'OR ('
+        '("Endocrine Disrupting Chemicals"[MeSH Terms] OR "Endocrine Disruptors"[MeSH Terms] OR "EDCs"[Title/Abstract] OR "Endocrine Disruptors"[Title/Abstract]) '
+        'AND ('
+            '("Bisphenol A"[MeSH Terms] OR "BPA"[Title/Abstract]) '
+            'OR ("Phthalates"[MeSH Terms] OR "Phthalate"[Title/Abstract]) '
+            'OR ("Polychlorinated Biphenyls"[MeSH Terms] OR "PCBs"[Title/Abstract]) '
+           # 'OR ("Regulation"[MeSH Terms] OR "Risk Assessment"[Title/Abstract]) '
+        ') '
+    ') '
+    'NOT review[Publication Type]'
+)
+xml_path = '../BioBuilders/articles_tool2.xml'
+excel_path = '../BioBuilders/query_results2.xlsx'
+
+#search_entrez_and_save(query1, xml_path, excel_path)
+search_entrez_and_save(query2, xml_path, excel_path)
 
 # xml scrapping/ getting csv with info
-xml_path = '/Users/annalifousihotmailcom/python/DTU Biobuilders/articles_tool.xml'
-csv_path = '/Users/annalifousihotmailcom/python/DTU Biobuilders/articles.csv'
+xml_path = '../BioBuilders/articles_tool2.xml'
+csv_path = '../BioBuilders/articles2.csv'
 
 pmc_count = parse_xml_to_csv(xml_path, csv_path)
