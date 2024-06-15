@@ -102,3 +102,76 @@ trans_df = pd.DataFrame(meta)
 trans_df.to_csv('meta_info.csv', index=False)
 
 """
+import pandas as pd
+import spacy
+import scispacy
+import nltk
+nltk.download('punkt')
+
+import en_ner_bionlp13cg_md
+import en_ner_craft_md
+import en_ner_bc5cdr_md
+
+# Load the models
+print("Loading models...")
+nlp_bi = en_ner_bionlp13cg_md.load()
+nlp_cr = en_ner_craft_md.load()
+nlp_bc = en_ner_bc5cdr_md.load()
+print("Models loaded successfully.")
+
+# Function to perform NER and add results to the table
+def ner(text, pmcid, table, f):
+    if f == "bi":
+        doc = nlp_bi(text)
+    elif f == "bc":
+        doc = nlp_bc(text)
+    else:
+        print("ERROR")
+        return table
+
+    ent = {}
+    for x in doc.ents:
+        ent[x.text] = x.label_
+    for k in ent:
+        table["ID"].append(pmcid)
+        table["Entity"].append(k)
+        table["Class"].append(ent[k])
+
+    return table
+
+# Read the CSV file
+print("Reading CSV file...")
+df = pd.read_csv('articles.csv')
+print("CSV file read successfully.")
+
+# Replace NaN values with empty strings
+df = df.fillna("")
+
+# Initialize the table for storing entities
+table = {"ID": [], "Entity": [], "Class": []}
+
+# Iterate through each row in the DataFrame
+for index, row in df.iterrows():
+    pmcid = row['PMC ID']
+    title = row['Title']
+    abstract = row['Abstract']
+
+    # Ensure the text fields are strings
+    title = str(title)
+    abstract = str(abstract)
+
+    # Print progress
+    print(f"Processing row {index + 1}/{len(df)} - PMC ID: {pmcid}")
+
+    # Apply NER to the title
+    ner(title, pmcid, table, "bi")
+    ner(title, pmcid, table, "bc")
+
+    # Apply NER to the abstract
+    ner(abstract, pmcid, table, "bi")
+    ner(abstract, pmcid, table, "bc")
+
+# Convert the results table to a DataFrame and save to a CSV file
+entity_df = pd.DataFrame(table)
+entity_df.to_csv('ner_data.csv', index=False)
+print("Entity extraction completed and results saved to ner_data.csv.")
