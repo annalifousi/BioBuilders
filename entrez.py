@@ -9,6 +9,11 @@ from bs4 import BeautifulSoup
 Entrez.email = 'annalifousi@gmail.com'
 Entrez.tool = 'Demoscript'
 
+
+
+# Data retrieval. We convert the data retrieved from the pubmed in xml format and then load them in an xml file (articles_toool.xml)
+
+
 def search_entrez_and_save(query, xml_path, excel_path):
     # Searching for the query in Entrez
     info = Entrez.esearch(db="pubmed", retmax=100000, term=query)
@@ -17,6 +22,11 @@ def search_entrez_and_save(query, xml_path, excel_path):
 
     # Count the number of articles
     num_articles = len(record['IdList'])
+    
+    #if we don't find articles
+    if num_articles == 0:
+        print("No articles found.")
+        return
 
     # Retrieve records in XML format
     fetch = Entrez.efetch(db='pubmed',
@@ -68,6 +78,9 @@ def parse_xml_to_csv(xml_path, csv_path):
     with open(xml_path, 'r', encoding='utf-8') as file:
         xml_content = file.read()
 
+
+#Web scraping procedure 
+
     # Parse the XML content with BeautifulSoup
     soup = BeautifulSoup(xml_content, 'xml')
 
@@ -113,7 +126,7 @@ def parse_xml_to_csv(xml_path, csv_path):
                 abstract_text = ' '.join([p.text for p in abstract.find_all('AbstractText')])
             else:
                 abstract_text = 'N/A'
-
+                
             # Extract PMC ID if available
             pmc_id = None
             for article_id in article.find_all('ArticleId'):
@@ -145,8 +158,11 @@ query1 = ('("Endocrine Disruptors"[MeSH Terms] OR "endocrine disrupting chemical
 # Entrez searching/ getting xml file with articles
 query2 = (
     '("Endocrine Disruptors"[MeSH Terms] OR "endocrine disrupting chemicals"[Title/Abstract] OR "EDCs"[Title/Abstract] OR "hormonally active agents"[Title/Abstract] OR "Endocrine disrupting compounds"[Title/Abstract]) '
-    'AND (human[Title/Abstract]) '
+    'AND (human[Title/Abstract] OR "human"[MeSH Terms]) '
     'AND ("Receptors, Endocrine"[MeSH Terms] OR "receptors"[Title/Abstract] OR "receptor"[Title/Abstract] OR target[Title/Abstract]) '
+    #incorporated MIE search in the query
+    'OR ("molecular initiating event"[Title/Abstract] OR "MIE"[Title/Abstract] OR "endocrine disruption"[Title/Abstract] OR "receptor binding"[Title/Abstract] OR "signal transduction"[Title/Abstract] OR "gene expression"[Title/Abstract])'
+    'AND'
     'AND ('
         '("human estrogen receptor alpha"[Title/Abstract] OR "HERa"[Title/Abstract] OR "Estrogen"[Title/Abstract] OR target[Title/Abstract]) '
         'OR "estradiol"[Title/Abstract] '
@@ -167,15 +183,20 @@ query2 = (
         ') '
     ') '
     'NOT review[Publication Type]'
+
+    #mesh terms
+    'AND ("Reproduction"[MeSH Terms] OR "Endocrine System"[MeSH Terms] OR "chemistry"[MeSH Terms] OR "toxicity"[MeSH Terms])'
+    'OR "Disruptors, Endocrine"[MeSH Terms] OR "Endocrine Disruptor"[MeSH Terms] OR "Endocrine Disrupting Chemical"[MeSH Terms] OR "Chemical, Endocrine Disrupting"[MeSH Terms] OR "Disrupting Chemical, Endocrine"[MeSH Terms] OR "Endocrine Disruptor Effect"[MeSH Terms] OR "Effect, Endocrine Disruptor"[MeSH Terms] OR "Endocrine Disruptor Effects"[MeSH Terms]'
+    'OR "Water pollutants"[MeSH Terms] OR  "Gonadal Steroid Hormones"[MeSH Terms] OR "fertility"[MeSH Terms] OR "infertility"[MeSH Terms] OR "Androgen antagonists"[MeSH Terms] OR "Estrogen antagonists"[MeSH Terms] OR Estrogen agonists OR androgen agonists"[MeSH Terms] '
 )
-xml_path = '../BioBuilders/articles_tool2.xml'
-excel_path = '../BioBuilders/query_results2.xlsx'
+xml_path = '../BioBuilders/articles_tool.xml'
+excel_path = '../BioBuilders/query_results.xlsx'
 
 #search_entrez_and_save(query1, xml_path, excel_path)
 search_entrez_and_save(query2, xml_path, excel_path)
 
 # xml scrapping/ getting csv with info
-xml_path = '../BioBuilders/articles_tool2.xml'
-csv_path = '../BioBuilders/articles2.csv'
+xml_path = '../BioBuilders/articles_tool.xml'
+csv_path = '../BioBuilders/articles.csv'
 
 pmc_count = parse_xml_to_csv(xml_path, csv_path)
