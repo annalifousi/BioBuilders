@@ -104,20 +104,29 @@ trans_df.to_csv('meta_info.csv', index=False)
 """
 import pandas as pd
 import spacy
-import scispacy
-import nltk
-nltk.download('punkt')
-
+from scispacy.linking import EntityLinker
 import en_ner_bionlp13cg_md
-import en_ner_craft_md
 import en_ner_bc5cdr_md
 
 # Load the models
 print("Loading models...")
 nlp_bi = en_ner_bionlp13cg_md.load()
-nlp_cr = en_ner_craft_md.load()
 nlp_bc = en_ner_bc5cdr_md.load()
 print("Models loaded successfully.")
+
+# Initialize the Entity linker
+print("Initializing EntityLinker...")
+#linker = EntityLinker(name="umls", k=30)
+
+
+# Add EntityLinker to each model's pipeline
+nlp_bi.add_pipe("scispacy_linker", config={"resolve_abbreviations": True, "linker_name": "umls"})
+nlp_bc.add_pipe("scispacy_linker", config={"resolve_abbreviations": True, "linker_name": "umls"})
+
+#here we add the Abbreviation
+
+print("EntityLinker initialized successfully.")
+
 
 # Function to perform NER and add results to the table
 def ner(text, pmcid, table, f):
@@ -147,11 +156,21 @@ print("CSV file read successfully.")
 # Replace NaN values with empty strings
 df = df.fillna("")
 
+df_subset = df.head(4)
 # Initialize the table for storing entities
-table = {"ID": [], "Entity": [], "Class": []}
+table = {"ID": [], "Entity": [], "Class": [],"Linked Entity ID": [], "Linked Entity Score": []}
+
+# conditionals something is fishy
+#################################
+
+# https://github.com/allenai/scispacy
+
+
+#abbreviation Detector
+
 
 # Iterate through each row in the DataFrame
-for index, row in df.iterrows():
+for index, row in df_subset.iterrows():
     pmcid = row['PMC ID']
     title = row['Title']
     abstract = row['Abstract']
