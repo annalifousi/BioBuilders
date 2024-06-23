@@ -107,6 +107,7 @@ import spacy
 from scispacy.linking import EntityLinker
 import en_ner_bionlp13cg_md
 import en_ner_bc5cdr_md
+from scispacy.abbreviation import AbbreviationDetector
 
 # Load the models
 print("Loading models...")
@@ -116,19 +117,17 @@ print("Models loaded successfully.")
 
 # Initialize the Entity linker
 print("Initializing EntityLinker...")
-#linker = EntityLinker(name="umls", k=30)
+# linker = EntityLinker(name="umls", k=30)
 
-
-# Add EntityLinker to each model's pipeline
+# Add EntityLinker and AbbreviationDetector to each model's pipeline
+nlp_bi.add_pipe("abbreviation_detector")
 nlp_bi.add_pipe("scispacy_linker", config={"resolve_abbreviations": True, "linker_name": "umls"})
+nlp_bc.add_pipe("abbreviation_detector")
 nlp_bc.add_pipe("scispacy_linker", config={"resolve_abbreviations": True, "linker_name": "umls"})
-
-#here we add the Abbreviation
 
 print("EntityLinker initialized successfully.")
 
-
-# Function to perform NER and add results to the table
+# Function to perform NER, standardize abbreviations, and add results to the table
 def ner(text, pmcid, table, f):
     if f == "bi":
         doc = nlp_bi(text)
@@ -138,13 +137,33 @@ def ner(text, pmcid, table, f):
         print("ERROR")
         return table
 
+    # Process abbreviations
+    abbreviations = {}
+    for abrv in doc._.abbreviations:
+        long_form = str(abrv._.long_form)
+        short_form = str(abrv)
+        text = text.replace(short_form, long_form)
+        abbreviations[short_form.lower()] = long_form
+    
+    # Lowercase the text
+    text = text.lower()
+    
+    # Reprocess the document with expanded abbreviations
+    doc = nlp_bi(text) if f == "bi" else nlp_bc(text)
+
     ent = {}
     for x in doc.ents:
-        ent[x.text] = x.label_
+        ent[x.text.lower()] = x.label_
+    
     for k in ent:
         table["ID"].append(pmcid)
         table["Entity"].append(k)
         table["Class"].append(ent[k])
+        # Add long form if abbreviation exists, otherwise empty string
+        if k in abbreviations: # long form for the chemicals when needed
+            table["LongForm"].append(abbreviations[k])
+        else:
+            table["LongForm"].append("")
 
     return table
 
@@ -158,16 +177,7 @@ df = df.fillna("")
 
 df_subset = df.head(4)
 # Initialize the table for storing entities
-table = {"ID": [], "Entity": [], "Class": [],"Linked Entity ID": [], "Linked Entity Score": []}
-
-# conditionals something is fishy
-#################################
-
-# https://github.com/allenai/scispacy
-
-
-#abbreviation Detector
-
+table = {"ID": [], "Entity": [], "Class": [], "LongForm": []}
 
 # Iterate through each row in the DataFrame
 for index, row in df_subset.iterrows():
