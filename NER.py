@@ -157,6 +157,40 @@ patterns += [{"label": "ANDROGEN_RECEPTOR_DISRUPTIVE_CHEMICAL", "pattern": edc} 
 ruler_bi.add_patterns(patterns)
 ruler_bc.add_patterns(patterns)
 
+# Add a matcher in the pipeline
+from spacy.matcher import PhraseMatcher
+from spacy.language import Language
+# Initialize the PhraseMatcher
+matcher = PhraseMatcher(nlp_bi.vocab)
+matcher.add("EDC_TERMS", [nlp_bi.make_doc(term) for term in set(androgen_df['Name'].str.lower()) | set(estrogen_df['Name'].str.lower())])
+
+
+@Language.component("edc_matcher")
+def edc_matcher(doc):
+    matches = matcher(doc)
+    spans = []
+    seen_tokens = set()
+
+    for match_id, start, end in matches:
+        span = doc[start:end]
+        # Check if any token in the span has already been included in another entity
+        if any(token.idx in seen_tokens for token in span):
+            continue
+        spans.append((start, end))
+        seen_tokens.update(token.idx for token in span)
+
+    # Add spans to doc.ents, ensuring no overlapping entities are added
+    with doc.retokenize() as retokenizer:
+        for start, end in spans:
+            retokenizer.merge(doc[start:end])
+
+    return doc
+
+
+# Add the custom component to the pipeline
+nlp_bi.add_pipe("edc_matcher", before='ner')
+nlp_bc.add_pipe("edc_matcher", before = 'ner')
+
 # Function to perform NER, standardize abbreviations, and add results to the table
 def ner(text, pmcid, table, f):
     if f == "bi":
