@@ -125,7 +125,37 @@ nlp_bi.add_pipe("scispacy_linker", config={"resolve_abbreviations": True, "linke
 nlp_bc.add_pipe("abbreviation_detector")
 nlp_bc.add_pipe("scispacy_linker", config={"resolve_abbreviations": True, "linker_name": "umls"})
 
-print("EntityLinker initialized successfully.")
+# Add the entity ruler to the pipeline
+ruler_bi = nlp_bi.add_pipe("entity_ruler", before="ner")
+ruler_bc = nlp_bc.add_pipe("entity_ruler", before="ner")
+
+###########
+# Read EDCs from the androgen_EKDB.tsv file
+print("Reading EDCs from androgen_EKDB.tsv...")
+androgen_df = pd.read_csv('EDC_androgen_catalog.tsv', sep='\t')
+edc_androgen_names = androgen_df['Name'].unique()  # Get unique EDC names from EDC_estrogen_catalog 
+#Ειναι ηδη unique
+
+############
+# Read EDCs from the androgen.tsv file
+print("Reading EDCs from estrogen.tsv...")
+estrogen_df = pd.read_csv('EDC_estrogen_catalog.tsv', sep='\t')
+edc_estrogen_names = estrogen_df['Name'].unique()  # Get unique EDC names from EDC_estrogen_catalog
+
+# Identify common and unique EDCs
+common_edcs = set(edc_estrogen_names).intersection(set(edc_androgen_names))
+estrogen_specific_edcs = set(edc_estrogen_names) - common_edcs
+androgen_specific_edcs = set(edc_androgen_names) - common_edcs
+
+
+# Create patterns for each category
+patterns = [{"label": "ENDOCRINE_DISRUPTIVE_CHEMICALS", "pattern": edc} for edc in common_edcs]
+patterns += [{"label": "ESTROGEN_RECEPTOR_DISRUPTIVE_CHEMICAL", "pattern": edc} for edc in estrogen_specific_edcs]
+patterns += [{"label": "ANDROGEN_RECEPTOR_DISRUPTIVE_CHEMICAL", "pattern": edc} for edc in androgen_specific_edcs]
+
+# Add patterns to the entity ruler
+ruler_bi.add_patterns(patterns)
+ruler_bc.add_patterns(patterns)
 
 # Function to perform NER, standardize abbreviations, and add results to the table
 def ner(text, pmcid, table, f):
@@ -160,7 +190,7 @@ def ner(text, pmcid, table, f):
         table["Entity"].append(k)
         table["Class"].append(ent[k])
         # Add long form if abbreviation exists, otherwise empty string
-        if k in abbreviations: # long form for the chemicals when needed
+        if k in abbreviations:
             table["LongForm"].append(abbreviations[k])
         else:
             table["LongForm"].append("")
@@ -175,32 +205,20 @@ print("CSV file read successfully.")
 # Replace NaN values with empty strings
 df = df.fillna("")
 
-df_subset = df.head(4)
+df_subset = df.head(100)
 # Initialize the table for storing entities
 table = {"ID": [], "Entity": [], "Class": [], "LongForm": []}
 
-# Iterate through each row in the DataFrame
+
+# Process each text in the subset
 for index, row in df_subset.iterrows():
+    text = row['Abstract']
     pmcid = row['PMC ID']
-    title = row['Title']
-    abstract = row['Abstract']
+    table = ner(text, pmcid, table, "bi")
+    table = ner(text, pmcid, table, "bc")
 
-    # Ensure the text fields are strings
-    title = str(title)
-    abstract = str(abstract)
+# Convert the table dictionary to a DataFrame and save to CSV
+result_df = pd.DataFrame(table)
+result_df.to_csv('EDC_ner.tsv', index=False)
 
-    # Print progress
-    print(f"Processing row {index + 1}/{len(df)} - PMC ID: {pmcid}")
-
-    # Apply NER to the title
-    ner(title, pmcid, table, "bi")
-    ner(title, pmcid, table, "bc")
-
-    # Apply NER to the abstract
-    ner(abstract, pmcid, table, "bi")
-    ner(abstract, pmcid, table, "bc")
-
-# Convert the results table to a DataFrame and save to a CSV file
-entity_df = pd.DataFrame(table)
-entity_df.to_csv('ner_data.csv', index=False)
-print("Entity extraction completed and results saved to ner_data.csv.")
+print("NER conversion performed successfully.")
