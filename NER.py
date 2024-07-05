@@ -146,8 +146,13 @@ print("Reading EDCs from EDC_catalog_deduct.tsv...")
 deduct_df = pd.read_csv('EDC_catalog_deduct.tsv', sep='\t')
 edc_deduct_names = set(deduct_df['Name'].str.lower().unique())  # Get unique EDC names and convert to lowercase
 
+print("Reading EDCs from manual_catalog.tsv...")
+manual_df = pd.read_csv('manual_catalog.tsv', sep='\t')
+manual_df_names = set(manual_df['Name'].str.lower())  # Get unique EDC names and convert to lowercase
+
 # Combine all unique EDC names
-all_edc_names = edc_androgen_names.union(edc_estrogen_names).union(edc_deduct_names)
+all_edc_names = edc_androgen_names.union(edc_estrogen_names).union(edc_deduct_names).union(manual_df_names)
+
 
 # Convert the set to a sorted list
 all_edc_names_sorted = sorted(all_edc_names)
@@ -158,7 +163,6 @@ edc_df.to_csv('combined_edc_catalog.tsv', sep='\t', index=False)
 
 print("Combined EDC catalog created successfully with unique entities.")
 
-all_edc_names = edc_androgen_names.union(edc_estrogen_names).union(edc_deduct_names)
 patterns = [{"label": "ENDOCRINE_DISRUPTING_CHEMICALS", "pattern": edc} for edc in all_edc_names]
 
 # Add patterns to the entity ruler
@@ -168,12 +172,8 @@ ruler_bc.add_patterns(patterns)
 from spacy.matcher import PhraseMatcher
 from spacy.language import Language
 # Initialize the PhraseMatcher
-matcher = PhraseMatcher(nlp_bi.vocab)
-matcher.add("EDC_TERMS", [nlp_bi.make_doc(term) for term in set(edc_df['Name'].str.lower())])
 
 
-
-from spacy.language import Language
 # Initialize the PhraseMatcher
 matcher = PhraseMatcher(nlp_bi.vocab)
 matcher.add("EDC_TERMS", [nlp_bi.make_doc(term) for term in set(edc_df['Name'].str.lower())])
@@ -230,7 +230,7 @@ def ner(text, pmcid, table, f):
             if label in ["chemical", "endocrine_disrupting_chemicals", "gene_or_gene_product"]:
                 # Determine the primary label based on priority
                 if "endocrine_disrupting_chemicals" in label:
-                    primary_label = "Endocrine_Disrupting chemicals"
+                    primary_label = "ENDOCRINE_DISRUPTING_CHEMICALS"
                 elif "gene_or_gene_product" in label:
                     primary_label = "GENE_OR_GENE_PRODUCT"
                 else:
@@ -279,4 +279,4 @@ for index, row in df.head(100).iterrows():  # Adjust the subset size as needed
 
 # Convert the table to a DataFrame and save as a TSV file
 output_df = pd.DataFrame(table)
-output_df.to_csv('EDC_chemicals_genes.tsv', sep='\t', index=False)
+output_df.to_csv('filtered_entities.tsv', sep='\t', index=False)
