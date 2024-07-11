@@ -1,0 +1,180 @@
+estrogen
+receptor
+er
+androgen
+receptor
+ar
+thyroid
+hormone
+receptor
+tr
+trα
+trβ
+progesterone
+receptor
+pr
+aryl
+hydrocarbon
+receptor
+ahr
+peroxisome
+proliferator-activated
+receptor
+ppar
+pparα
+pparβ/δ
+pparγ
+retinoid
+x
+receptor
+rxr
+rxrα
+rxrβ
+rxrγ
+liver
+x
+receptor
+lxr
+lxrα
+lxrβ
+farnesoid
+x
+receptor
+fxr
+nuclear
+receptor
+nr
+glucocorticoid
+receptor
+gr
+mineralocorticoid
+receptor
+mr
+vitamin
+d
+receptor
+vdr
+pituitary
+hormone
+receptor
+growth
+hormone
+receptor
+ghr
+prolactin
+receptor
+prlr
+protein-coupled
+receptor
+gpcr
+follicle-stimulating
+hormone
+receptor
+fshr
+luteinizing
+hormone
+receptor
+lhr
+thyrotropin
+receptor
+tshr
+insulin
+receptor
+insulin-like
+growth
+factor
+receptor
+igf-1r
+epidermal
+growth
+factor
+receptor
+egfr
+androgen-responsive
+element
+are
+steroidogenesis
+receptor
+steroidogenic
+factor
+sf-1
+liver
+receptor
+homolog
+lrh-1
+nuclear
+factor
+erythroid
+2-related
+factor
+nrf2
+transient
+receptor
+potential
+trp
+estrogen receptor
+er
+androgen receptor
+ar
+thyroid hormone receptor
+tr
+trα
+trβ
+progesterone receptor
+pr
+aryl hydrocarbon receptor
+ahr
+peroxisome proliferator-activated receptor
+ppar
+pparα
+pparβ/δ
+pparγ
+retinoid x receptor
+rxr
+rxrα
+rxrβ
+rxrγ
+liver x receptor
+lxr
+lxrα
+lxrβ
+farnesoid x receptor
+fxr
+nuclear receptor
+nr
+glucocorticoid receptor
+gr
+mineralocorticoid receptor
+mr
+vitamin d receptor
+vdr
+pituitary hormone receptor
+growth hormone receptor
+ghr
+prolactin receptor
+prlr
+g protein-coupled receptor
+gpcr
+follicle-stimulating hormone receptor
+fshr
+luteinizing hormone receptor
+lhr
+thyrotropin receptor
+tshr
+insulin receptor
+ir
+insulin-like growth factor 1 receptor
+igf-1r
+epidermal growth factor receptor
+egfr
+androgen-responsive element
+are
+steroidogenesis receptor
+steroidogenic factor 1
+sf-1
+liver receptor homolog 1
+lrh-1
+nuclear factor erythroid 2-related factor 2
+nrf2
+transient receptor potential
+trp
