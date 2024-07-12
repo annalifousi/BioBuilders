@@ -1,9 +1,9 @@
+'''
 import pandas as pd
 import spacy
-from scispacy.linking import EntityLinker
+from scispacy.abbreviation import AbbreviationDetector
 import en_ner_bionlp13cg_md
 import en_ner_bc5cdr_md
-from scispacy.abbreviation import AbbreviationDetector
 
 # Load the models
 print("Loading models...")
@@ -11,160 +11,124 @@ nlp_bi = en_ner_bionlp13cg_md.load()
 nlp_bc = en_ner_bc5cdr_md.load()
 print("Models loaded successfully.")
 
-# Initialize the Entity linker
-print("Initializing EntityLinker...")
-# linker = EntityLinker(name="umls", k=30)
-
-# Add EntityLinker and AbbreviationDetector to each model's pipeline
+# Add AbbreviationDetector to each model's pipeline
+print("Adding AbbreviationDetector...")
 nlp_bi.add_pipe("abbreviation_detector")
-#nlp_bi.add_pipe("scispacy_linker", config={"resolve_abbreviations": True, "linker_name": "umls"})
 nlp_bc.add_pipe("abbreviation_detector")
-#nlp_bc.add_pipe("scispacy_linker", config={"resolve_abbreviations": True, "linker_name": "umls"})
 
-# Add the entity ruler to the pipeline
+# Add the EntityRuler to the pipeline
+print("Adding EntityRuler...")
 ruler_bi = nlp_bi.add_pipe("entity_ruler", before="ner")
 ruler_bc = nlp_bc.add_pipe("entity_ruler", before="ner")
+'''
+'''
+# Read EDCs from various files and combine
+def read_edc_files():
+    print("Reading EDC files...")
+    files = ['EDC_androgen_catalog.tsv', 'EDC_estrogen_catalog.tsv', 'EDC_catalog_deduct.tsv', 'manual_catalog.tsv']
+    all_edc_names = set()
 
-import pandas as pd
+    for file in files:
+        df = pd.read_csv(file, sep='\t')
+        all_edc_names.update(df['Name'].str.lower().unique())
 
-# Read EDCs from androgen_EKDB.tsv file
-print("Reading EDCs from androgen_EKDB.tsv...")
-androgen_df = pd.read_csv('EDC_androgen_catalog.tsv', sep='\t')
-edc_androgen_names = set(androgen_df['Name'].str.lower().unique())  # Get unique EDC names and convert to lowercase
+    return sorted(all_edc_names)
 
-# Read EDCs from estrogen.tsv file
-print("Reading EDCs from estrogen.tsv...")
-estrogen_df = pd.read_csv('EDC_estrogen_catalog.tsv', sep='\t')
-edc_estrogen_names = set(estrogen_df['Name'].str.lower().unique())  # Get unique EDC names and convert to lowercase
+all_edc_names = read_edc_files()
+'''
+'''
 
-# Read EDCs from EDC_catalog_deduct.tsv file
-print("Reading EDCs from EDC_catalog_deduct.tsv...")
-deduct_df = pd.read_csv('EDC_catalog_deduct.tsv', sep='\t')
-edc_deduct_names = set(deduct_df['Name'].str.lower().unique())  # Get unique EDC names and convert to lowercase
-
-print("Reading EDCs from manual_catalog.tsv...")
-manual_df = pd.read_csv('manual_catalog.tsv', sep='\t')
-manual_df_names = set(manual_df['Name'].str.lower())  # Get unique EDC names and convert to lowercase
-
-# Combine all unique EDC names
-all_edc_names = edc_androgen_names.union(edc_estrogen_names).union(edc_deduct_names).union(manual_df_names)
-
-
-# Convert the set to a sorted list
-all_edc_names_sorted = sorted(all_edc_names)
-
-# Save the combined unique entities to a new TSV file
-edc_df = pd.DataFrame(all_edc_names_sorted, columns=['Name'])
+# Convert the set to a sorted list and save to a new TSV file
+edc_df = pd.DataFrame(all_edc_names, columns=['Name'])
 edc_df.to_csv('combined_edc_catalog.tsv', sep='\t', index=False)
+print("Combined EDC catalog created successfully.")
+'''
+'''
 
-print("Combined EDC catalog created successfully with unique entities.")
-
+# Define patterns for EntityRuler
 patterns = [{"label": "ENDOCRINE_DISRUPTING_CHEMICALS", "pattern": edc} for edc in all_edc_names]
+'''
+'''
 
-# Add patterns to the entity ruler
+# Add patterns to the EntityRuler
+print("Adding patterns to EntityRuler...")
 ruler_bi.add_patterns(patterns)
 ruler_bc.add_patterns(patterns)
+'''
 
-from spacy.matcher import PhraseMatcher
-from spacy.language import Language
-# Initialize the PhraseMatcher
+'''
 
+'''
+import pandas as pd
+import spacy
+from scispacy.abbreviation import AbbreviationDetector
+import en_ner_bionlp13cg_md
+import en_ner_bc5cdr_md
 
-# Initialize the PhraseMatcher
-matcher = PhraseMatcher(nlp_bi.vocab)
-matcher.add("EDC_TERMS", [nlp_bi.make_doc(term) for term in set(edc_df['Name'].str.lower())])
-@Language.component("edc_matcher")
-def edc_matcher(doc):
-    matches = matcher(doc)
-    spans = []
-    seen_tokens = set()
+# Load the models
+print("Loading models...")
+nlp_bi = en_ner_bionlp13cg_md.load()
+nlp_bc = en_ner_bc5cdr_md.load()
+print("Models loaded successfully.")
 
-    for match_id, start, end in matches:
-        span = doc[start:end]
-        # Check if any token in the span has already been included in another entity
-        if any(token.idx in seen_tokens for token in span):
-            continue
-        spans.append((start, end))
-        seen_tokens.update(token.idx for token in span)
+# Add AbbreviationDetector to each model's pipeline
+print("Adding AbbreviationDetector...")
+nlp_bi.add_pipe("abbreviation_detector")
+nlp_bc.add_pipe("abbreviation_detector")
+print("AbbreviationDetector added successfully.")
 
-    # Add spans to doc.ents, ensuring no overlapping entities are added
-    with doc.retokenize() as retokenizer:
-        for start, end in spans:
-            retokenizer.merge(doc[start:end])
+# Load EDC terms from the combined catalog
+print("Loading EDC terms from combined_edc_catalog.tsv...")
+edc_df = pd.read_csv('combined_edc_catalog.tsv', sep='\t')
+edc_terms = set(edc_df['Name'].str.lower())  # Convert to a set for quick lookup
 
-    return doc # Add the custom component to the pipeline
-nlp_bi.add_pipe("edc_matcher", before='ner')
-nlp_bc.add_pipe("edc_matcher", before = 'ner')# Function to perform NER, standardize abbreviations, and filter entities
-
-def ner(text, pmcid, table, f):
-    try:
-        if f == "bi":
-            doc = nlp_bi(text)
-        elif f == "bc":
-            doc = nlp_bc(text)
-        else:
-            print("ERROR: Invalid 'f' value")
-            return table
-
-        # Process abbreviations
-        abbreviations = {}
-        for abrv in doc._.abbreviations:
-            long_form = str(abrv._.long_form)
-            short_form = str(abrv)
-            text = text.replace(short_form, long_form)
-            abbreviations[short_form.lower()] = long_form
-        
-        # Lowercase the text
-        text = text.lower()
-        
-        # Reprocess the document with expanded abbreviations
-        doc = nlp_bi(text) if f == "bi" else nlp_bc(text)
-
-        for ent in doc.ents:
-            label = ent.label_.lower()
-            
-            # Check if the entity has any of the required labels
-            if label in ["chemical", "endocrine_disrupting_chemicals", "gene_or_gene_product"]:
-                # Determine the primary label based on priority
-                if "endocrine_disrupting_chemicals" in label:
-                    primary_label = "ENDOCRINE_DISRUPTING_CHEMICALS"
-                elif "gene_or_gene_product" in label:
-                    primary_label = "GENE_OR_GENE_PRODUCT"
-                else:
-                    primary_label = ent.label_
-                
-                # Check if the entity is followed by a noun
-                is_followed_by_noun = False
-                if ent.end < len(doc):
-                    next_token = doc[ent.end]
-                    if next_token.pos_ == "NOUN":
-                        is_followed_by_noun = True
-
-                if is_chemical(ent.text) and is_followed_by_noun:
-                    table["ID"].append(pmcid)
-                    table["Entity"].append(ent.text.lower())
-                    table["Class"].append(primary_label)
-                    # Add long form if abbreviation exists, otherwise empty string
-                    if ent.text.lower() in abbreviations:
-                        table["LongForm"].append(abbreviations[ent.text.lower()])
-                    else:
-                        table["LongForm"].append("")
-        
+# Function to perform NER, standardize abbreviations, and add results to the table
+def ner(text, pmcid, table, model_name):
+    if model_name == "bi":
+        doc = nlp_bi(text)
+    elif model_name == "bc":
+        doc = nlp_bc(text)
+    else:
+        print("ERROR: Invalid 'model_name' value")
         return table
+
+    # Process abbreviations
+    abbreviations = {}
+    for abrv in doc._.abbreviations:
+        long_form = str(abrv._.long_form)
+        short_form = str(abrv)
+        abbreviations[short_form.lower()] = long_form
+        text = text.replace(short_form, long_form)
     
-    except Exception as e:
-        print(f"Error in NER function for pmcid={pmcid}: {str(e)}")
-        return table
+    # Lowercase the text
+    text = text.lower()
+    
+    # Reprocess the document with expanded abbreviations
+    doc = nlp_bi(text) if model_name == "bi" else nlp_bc(text)
 
+    for ent in doc.ents:
+        # Check if the entity is followed by a verb or infinitive verb
+        is_followed_by_verb = False
+        if ent.end < len(doc):
+            next_token = doc[ent.end]
+            if next_token.pos_ in ["VERB", "INF"]:
+                is_followed_by_verb = True
+        
+        # Check for EDC terms
+        if ent.text.lower() in edc_terms:
+            ent_label = "ENDOCRINE_DISRUPTING_CHEMICALS"
+        else:
+            ent_label = ent.label_
 
-# Function to perform additional checks for chemical entities
-def is_chemical(text):
-    exclude_words = ["protein"]
-    # Example criteria for identifying chemical entities
-    # Adjust based on your specific dataset characteristics
-    if text.isalpha() and len(text) >= 2 not in exclude_words:  # Example: must be alphabetic and longer than 2 characters
-        return True
-    return False
+        # Add entity to the table
+        table["ID"].append(pmcid)
+        table["Entity"].append(ent.text)
+        table["Class"].append(ent_label)
+        table["LongForm"].append(abbreviations.get(ent.text.lower(), ""))
+        table["FollowedByVerb"].append(is_followed_by_verb)
+
+    return table
+
 # Read the CSV file
 print("Reading CSV file...")
 df = pd.read_csv('articles.csv')
@@ -173,14 +137,33 @@ print("CSV file read successfully.")
 # Replace NaN values with empty strings
 df = df.fillna("")
 
-# Process each text in the subset
-table = {"ID": [], "Entity": [], "Class": [], "LongForm":[]}
-for index, row in df.head(100).iterrows():  # Adjust the subset size as needed
-    text = row['Abstract']
-    pmcid = row['PMC ID']
-    table = ner(text, pmcid, table, "bi")
-    table = ner(text, pmcid, table, "bc")
+df_subset = df.head(10)  # Adjust the subset size as needed
 
-# Convert the table to a DataFrame and save as a TSV file
-output_df = pd.DataFrame(table)
-output_df.to_csv('filtered_entities.tsv', sep='\t', index=False)
+# Initialize the table for storing entities
+table = {"ID": [], "Entity": [], "Class": [], "LongForm": [], "FollowedByVerb": []}
+
+# Iterate through each row in the DataFrame
+for index, row in df_subset.iterrows():
+    pmcid = row['PMC ID']
+    title = row['Title']
+    abstract = row['Abstract']
+
+    # Ensure the text fields are strings
+    title = str(title)
+    abstract = str(abstract)
+
+    # Print progress
+    print(f"Processing row {index + 1}/{len(df)} - PMC ID: {pmcid}")
+
+    # Apply NER to the title
+    ner(title, pmcid, table, "bi")
+    ner(title, pmcid, table, "bc")
+
+    # Apply NER to the abstract
+    ner(abstract, pmcid, table, "bi")
+    ner(abstract, pmcid, table, "bc")
+
+# Convert the results table to a DataFrame and save to a CSV file
+entity_df = pd.DataFrame(table)
+entity_df.to_csv('ner_data.csv', index=False)
+print("Entity extraction completed and results saved to ner_data.csv.")
