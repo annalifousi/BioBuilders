@@ -111,7 +111,7 @@ def ner(text, pmcid, table, model_name):
         is_followed_by_verb = False
         if ent.end < len(doc):
             next_token = doc[ent.end]
-            if next_token.pos_ in ["VERB", "INF"]:
+            if next_token.pos_ in ["VERB", "ADV"]: #THE INF NEEDS TO BE ADVERB
                 is_followed_by_verb = True
         
         # Check for EDC terms
