@@ -1,64 +1,3 @@
-'''
-import pandas as pd
-import spacy
-from scispacy.abbreviation import AbbreviationDetector
-import en_ner_bionlp13cg_md
-import en_ner_bc5cdr_md
-
-# Load the models
-print("Loading models...")
-nlp_bi = en_ner_bionlp13cg_md.load()
-nlp_bc = en_ner_bc5cdr_md.load()
-print("Models loaded successfully.")
-
-# Add AbbreviationDetector to each model's pipeline
-print("Adding AbbreviationDetector...")
-nlp_bi.add_pipe("abbreviation_detector")
-nlp_bc.add_pipe("abbreviation_detector")
-
-# Add the EntityRuler to the pipeline
-print("Adding EntityRuler...")
-ruler_bi = nlp_bi.add_pipe("entity_ruler", before="ner")
-ruler_bc = nlp_bc.add_pipe("entity_ruler", before="ner")
-'''
-'''
-# Read EDCs from various files and combine
-def read_edc_files():
-    print("Reading EDC files...")
-    files = ['EDC_androgen_catalog.tsv', 'EDC_estrogen_catalog.tsv', 'EDC_catalog_deduct.tsv', 'manual_catalog.tsv']
-    all_edc_names = set()
-
-    for file in files:
-        df = pd.read_csv(file, sep='\t')
-        all_edc_names.update(df['Name'].str.lower().unique())
-
-    return sorted(all_edc_names)
-
-all_edc_names = read_edc_files()
-'''
-'''
-
-# Convert the set to a sorted list and save to a new TSV file
-edc_df = pd.DataFrame(all_edc_names, columns=['Name'])
-edc_df.to_csv('combined_edc_catalog.tsv', sep='\t', index=False)
-print("Combined EDC catalog created successfully.")
-'''
-'''
-
-# Define patterns for EntityRuler
-patterns = [{"label": "ENDOCRINE_DISRUPTING_CHEMICALS", "pattern": edc} for edc in all_edc_names]
-'''
-'''
-
-# Add patterns to the EntityRuler
-print("Adding patterns to EntityRuler...")
-ruler_bi.add_patterns(patterns)
-ruler_bc.add_patterns(patterns)
-'''
-
-'''
-
-'''
 import pandas as pd
 import spacy
 from scispacy.abbreviation import AbbreviationDetector
@@ -81,6 +20,15 @@ print("AbbreviationDetector added successfully.")
 print("Loading EDC terms from combined_edc_catalog.tsv...")
 edc_df = pd.read_csv('combined_edc_catalog.tsv', sep='\t')
 edc_terms = set(edc_df['Name'].str.lower())  # Convert to a set for quick lookup
+
+
+# Function to perform additional checks for chemical entities
+def is_chemical(text):
+    exclude_words = ["protein"]
+    # Example criteria for identifying chemical entities
+    if text.isalpha() and len(text) >= 2 and text.lower() not in exclude_words:
+        return True
+    return False
 
 # Function to perform NER, standardize abbreviations, and add results to the table
 def ner(text, pmcid, table, model_name):
@@ -116,16 +64,18 @@ def ner(text, pmcid, table, model_name):
         
         # Check for EDC terms
         if ent.text.lower() in edc_terms:
-            ent_label = "ENDOCRINE_DISRUPTING_CHEMICALS"
+            ent_label = "ENDOCRINE_DISRUPTING_CHEMICAL"
         else:
             ent_label = ent.label_
 
-        # Add entity to the table
-        table["ID"].append(pmcid)
-        table["Entity"].append(ent.text)
-        table["Class"].append(ent_label)
-        table["LongForm"].append(abbreviations.get(ent.text.lower(), ""))
-        table["FollowedByVerb"].append(is_followed_by_verb)
+ #Filter entities by specific classes
+        if ent_label in ["ENDOCRINE_DISRUPTING_CHEMICAL", "SIMPLE_CHEMICAL", "CHEMICAL"]:
+            # Add entity to the table
+            table["ID"].append(pmcid)
+            table["Entity"].append(ent.text)
+            table["Class"].append(ent_label)
+            table["LongForm"].append(abbreviations.get(ent.text.lower(), ""))
+            table["FollowedByVerb"].append(is_followed_by_verb)
 
     return table
 
@@ -143,7 +93,7 @@ df_subset = df.head(10)  # Adjust the subset size as needed
 table = {"ID": [], "Entity": [], "Class": [], "LongForm": [], "FollowedByVerb": []}
 
 # Iterate through each row in the DataFrame
-for index, row in df_subset.iterrows():
+for index, row in df.iterrows():
     pmcid = row['PMC ID']
     title = row['Title']
     abstract = row['Abstract']
