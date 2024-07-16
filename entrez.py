@@ -4,6 +4,7 @@ import openpyxl
 from openpyxl import Workbook
 import csv
 from bs4 import BeautifulSoup
+import pandas as pd
 
 # Identifying the connected user
 Entrez.email = 'annalifousi@gmail.com'
@@ -146,40 +147,65 @@ def parse_xml_to_csv(xml_path, csv_path):
     print(f'Number of articles with available PMC ID: {pmc_count}')
     return pmc_count
 
-'''
-# Entrez searching/ getting xml file with articles
-query1 = ('("Endocrine Disruptors"[MeSH Terms] OR "endocrine disrupting chemicals"[Title/Abstract] OR "EDC"[Title/Abstract]) '
-         'AND ("Receptors, Endocrine"[MeSH Terms] OR "receptors"[Title/Abstract] OR "receptor"[Title/Abstract]) '
-         'AND ("binding"[Title/Abstract] OR "interaction"[Title/Abstract] OR "affinity"[Title/Abstract] OR "assay"[Title/Abstract] OR "experiment"[Title/Abstract]) '
-         'NOT review[Publication Type]')
-'''
 
 
+# Load the TSV files for the scrapping
+
+# Read EDCs from androgen_EKDB.tsv file
+print("Reading EDCs from androgen_EKDB.tsv...")
+androgen_df = pd.read_csv('BioBuilders/EDC_androgen_catalog.tsv', sep='\t')
+edc_androgen_names = set(androgen_df['Name'].str.lower().unique())  # Get unique EDC names and convert to lowercase
+
+# Read EDCs from estrogen.tsv file from the EDKB database
+print("Reading EDCs from estrogen.tsv...")
+estrogen_df = pd.read_csv('BioBuilders/EDC_estrogen_catalog.tsv', sep='\t')
+edc_estrogen_names = set(estrogen_df['Name'].str.lower().unique())  # Get unique EDC names and convert to lowercase
+
+# Read EDCs from EDC_catalog_deduct.tsv file from the deduct database
+print("Reading EDCs from EDC_catalog_deduct.tsv...")
+deduct_df = pd.read_csv('BioBuilders/EDC_catalog_deduct.tsv', sep='\t')
+edc_deduct_names = set(deduct_df['Name'].str.lower().unique())  # Get unique EDC names and convert to lowercase
+
+# Read EDCs from manual_catalog.tsv file
+print("Reading EDCs from manual_catalog.tsv...")
+manual_df = pd.read_csv('BioBuilders/manual_catalog.tsv', sep='\t')
+manual_df_names = set(manual_df['Name'].str.lower())  # Get unique EDC names and convert to lowercase
+
+# Combine all unique EDC names
+all_edc_names = edc_androgen_names.union(edc_estrogen_names).union(edc_deduct_names).union(manual_df_names)
+
+# Create a DataFrame with the specified column name
+all_edc_names_df = pd.DataFrame(list(all_edc_names), columns=['Name'])
+
+# Save the DataFrame to a TSV file
+all_edc_names_df.to_csv('BioBuilders/combined_edc_catalog.tsv', sep='\t', index=False)
+
+# Read the combined TSV file into a DataFrame
+tsv_file_path = 'BioBuilders/combined_edc_catalog.tsv'
+combined_edc_df = pd.read_csv(tsv_file_path, sep='\t')
+
+# Assuming the keywords are in the column named 'Name'
+edc_keywords = combined_edc_df['Name'].tolist()
+
+
+#
+# Construct the keyword part of the query
+keyword_query = ' OR '.join([f'"{keyword}"[Title/Abstract]' for keyword in edc_keywords])
+
 # Entrez searching/ getting xml file with articles
-query2 = (
+query = (
     '("Endocrine Disruptors"[MeSH Terms] OR "endocrine disrupting chemicals"[Title/Abstract] OR "EDCs"[Title/Abstract] OR "hormonally active agents"[Title/Abstract] OR "Endocrine disrupting compounds"[Title/Abstract]) '
-    'AND (human[Title/Abstract] OR "human"[MeSH Terms]) '
-    'AND ("Receptors, Endocrine"[MeSH Terms] OR "receptors"[Title/Abstract] OR "receptor"[Title/Abstract] OR target[Title/Abstract]) '
     #incorporated MIE search in the query
-    'OR ("molecular initiating event"[Title/Abstract] OR "MIE"[Title/Abstract] OR "endocrine disruption"[Title/Abstract] OR "receptor binding"[Title/Abstract] OR "signal transduction"[Title/Abstract] OR "gene expression"[Title/Abstract])'
-    'AND'
+    'OR ("molecular initiating event"[Title/Abstract] OR "MIE"[Title/Abstract] OR "gene expression"[Title/Abstract])'
     'AND ('
-        '("human estrogen receptor alpha"[Title/Abstract] OR "HERa"[Title/Abstract] OR "Estrogen"[Title/Abstract] OR target[Title/Abstract]) '
-        'OR "estradiol"[Title/Abstract] '
+        '("human estrogen receptor alpha"[Title/Abstract] OR "HERa"[Title/Abstract] OR target[Title/Abstract]) '
         'OR ("HERb"[Title/Abstract] OR "Human estrogen receptor beta"[Title/Abstract]) '
-        'OR ("binding"[Title/Abstract] AND ("Human androgen receptor"[Title/Abstract] OR "HAR"[Title/Abstract] OR "Testosterone"[Title/Abstract])) '
+        'OR ("binding"[Title/Abstract] AND ("Human androgen receptor"[Title/Abstract] OR "HAR"[Title/Abstract])) '
         'OR ("NR3C1"[Title/Abstract] OR "Human glucocorticoid receptor"[Title/Abstract]) '
-        'OR "Dexamethasone"[Title/Abstract] '
-        'OR ("Human mineralocorticoid receptor"[Title/Abstract] OR "Aldosterone"[Title/Abstract] OR "NR3C2"[Title/Abstract]) '
-        'OR ("Progesterone"[Title/Abstract] OR "NR3C3"[Title/Abstract] OR "Human progesterone receptor"[Title/Abstract]) '
+        'OR "NR3C2"[Title/Abstract]) '
+        'OR "NR3C3"[Title/Abstract] OR "Human progesterone receptor"[Title/Abstract]) '
     ') '
-    'OR ('
-        '("Endocrine Disrupting Chemicals"[MeSH Terms] OR "Endocrine Disruptors"[MeSH Terms] OR "EDCs"[Title/Abstract] OR "Endocrine Disruptors"[Title/Abstract]) '
-        'AND ('
-            '("Bisphenol A"[MeSH Terms] OR "BPA"[Title/Abstract]) '
-            'OR ("Phthalates"[MeSH Terms] OR "Phthalate"[Title/Abstract]) '
-            'OR ("Polychlorinated Biphenyls"[MeSH Terms] OR "PCBs"[Title/Abstract]) '
-           # 'OR ("Regulation"[MeSH Terms] OR "Risk Assessment"[Title/Abstract]) '
+
         ') '
     ') '
     'NOT review[Publication Type]'
@@ -187,16 +213,19 @@ query2 = (
     #mesh terms
     'AND ("Reproduction"[MeSH Terms] OR "Endocrine System"[MeSH Terms] OR "chemistry"[MeSH Terms] OR "toxicity"[MeSH Terms])'
     'OR "Disruptors, Endocrine"[MeSH Terms] OR "Endocrine Disruptor"[MeSH Terms] OR "Endocrine Disrupting Chemical"[MeSH Terms] OR "Chemical, Endocrine Disrupting"[MeSH Terms] OR "Disrupting Chemical, Endocrine"[MeSH Terms] OR "Endocrine Disruptor Effect"[MeSH Terms] OR "Effect, Endocrine Disruptor"[MeSH Terms] OR "Endocrine Disruptor Effects"[MeSH Terms]'
-    'OR "Water pollutants"[MeSH Terms] OR  "Gonadal Steroid Hormones"[MeSH Terms] OR "fertility"[MeSH Terms] OR "infertility"[MeSH Terms] OR "Androgen antagonists"[MeSH Terms] OR "Estrogen antagonists"[MeSH Terms] OR Estrogen agonists OR androgen agonists"[MeSH Terms] '
+    'OR "Water pollutants"[MeSH Terms] OR  "Gonadal Steroid Hormones"[MeSH Terms] OR "fertility"[MeSH Terms] OR "infertility"[MeSH Terms] OR "Androgen antagonists"[MeSH Terms] OR "astrogen antagonists"[MeSH Terms] OR "estrogen agonists"[MeSH Terms] OR "androgen agonists"[MeSH Terms] '
 )
-xml_path = '../BioBuilders/articles_tool.xml'
-excel_path = '../BioBuilders/query_results.xlsx'
+
+final_query = f'({query}) OR ({keyword_query})'
+
+xml_path = 'BioBuilders/articles_tool.xml'
+excel_path = 'BioBuilders/query_results.xlsx'
 
 #search_entrez_and_save(query1, xml_path, excel_path)
-search_entrez_and_save(query2, xml_path, excel_path)
+search_entrez_and_save(query, xml_path, excel_path)
 
 # xml scrapping/ getting csv with info
-xml_path = '../BioBuilders/articles_tool.xml'
-csv_path = '../BioBuilders/articles.csv'
+xml_path = 'BioBuilders/articles_tool.xml'
+csv_path = 'BioBuilders/articles.csv'
 
 pmc_count = parse_xml_to_csv(xml_path, csv_path)
