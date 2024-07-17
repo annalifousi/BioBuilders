@@ -184,14 +184,56 @@ all_edc_names_df.to_csv('BioBuilders/combined_edc_catalog.tsv', sep='\t', index=
 tsv_file_path = 'BioBuilders/combined_edc_catalog.tsv'
 combined_edc_df = pd.read_csv(tsv_file_path, sep='\t')
 
-# Assuming the keywords are in the column named 'Name'
 edc_keywords = combined_edc_df['Name'].tolist()
 
+# Add the receptor keywords in the pipeline
+receptors_file_path = 'Biobuilders/receptors.tsv'
+receptors_df = pd.read_csv(receptors_file_path, sep='\t')
+receptors_keywords = receptors_df['Name'].tolist()
 
-#
-# Construct the keyword part of the query
-keyword_query = ' OR '.join([f'"{keyword}"[Title/Abstract]' for keyword in edc_keywords])
+#Add the activity query in the pipeline
+action_file_path = 'Biobuilders/edc_vocabulary.tsv'
+action_df = pd.read_csv(action_file_path, sep='\t')
+action_keywords = action_df['Name'].tolist()
 
+
+# Construct the keyword part of the query (EDCs)
+edc_query = ' OR '.join([f'"{keyword}"[Title/Abstract]' for keyword in edc_keywords])
+
+# Construct the keyword part of the query (receptors)
+receptors_query = ' OR '.join([f'"{keyword}"[Title/Abstract]' for keyword in receptors_keywords])
+
+# Construct the keyword part of the query (receptors)
+action_query = ' OR '.join([f'"{keyword}"[Title/Abstract]' for keyword in action_keywords])
+
+
+# MESH TERMS
+# Construct the MESH terms part of the query (EDCs)
+edc_mesh_query = ' OR '.join([f'"{term}"[MeSH Terms]' for term in edc_keywords])
+
+# Construct the MESH terms part of the query (receptors)
+receptors_mesh_query = ' OR '.join([f'"{term}"[MeSH Terms]' for term in receptors_keywords])
+
+# Construct the MESH terms part of the query (action)
+action_mesh_query = ' OR '.join([f'"{term}"[MeSH Terms]' for term in action_keywords])
+
+#########################################################################
+# Combine action-related terms with EDC-related terms using AND
+edc_and_action_query = ' AND '.join([
+    edc_query,
+    edc_mesh_query,
+    ' OR '.join([
+        action_query,
+        action_mesh_query
+    ])
+])
+
+
+
+#########################################################################
+
+
+#Additional query
 # Entrez searching/ getting xml file with articles
 query = (
     '("Endocrine Disruptors"[MeSH Terms] OR "endocrine disrupting chemicals"[Title/Abstract] OR "EDCs"[Title/Abstract] OR "hormonally active agents"[Title/Abstract] OR "Endocrine disrupting compounds"[Title/Abstract]) '
@@ -216,10 +258,15 @@ query = (
     'OR "Water pollutants"[MeSH Terms] OR  "Gonadal Steroid Hormones"[MeSH Terms] OR "fertility"[MeSH Terms] OR "infertility"[MeSH Terms] OR "Androgen antagonists"[MeSH Terms] OR "astrogen antagonists"[MeSH Terms] OR "estrogen agonists"[MeSH Terms] OR "androgen agonists"[MeSH Terms] '
 )
 
-final_query = f'({query}) OR ({keyword_query})'
+#combine everything
 
-xml_path = 'BioBuilders/articles_tool.xml'
-excel_path = 'BioBuilders/query_results.xlsx'
+final_query = f'({query}) OR '.join([
+    edc_and_action_query,
+    receptors_query,
+    receptors_mesh_query
+])
+xml_path = './articles_tool.xml'
+excel_path = './query_results.xlsx'
 
 #search_entrez_and_save(query1, xml_path, excel_path)
 search_entrez_and_save(query, xml_path, excel_path)

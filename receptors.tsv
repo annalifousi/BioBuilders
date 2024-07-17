@@ -3,7 +3,6 @@ receptor
 receptors
 er
 ar
-thyroid
 tr
 trα
 trβ
@@ -13,7 +12,6 @@ ppar
 pparα
 pparβ/δ
 pparγ
-retinoid
 rxr
 rxrα
 rxrβ
@@ -29,46 +27,26 @@ gr
 mineralocorticoid receptor
 mr
 vdr
-growth
-hormone
 ghr
-prolactin
 prlr
-protein-coupled
-receptor
 gpcr
-follicle-stimulating
 fshr
-luteinizing
 lhr
-thyrotropin
 tshr
-insulin
-insulin-like
-growth
-factor
 igf-1r
-epidermal
 egfr
-androgen-responsive
-steroidogenesis
-steroidogenic
-sf-1
-liver
-homolog
 lrh-1
-nuclear
-erythroid
-2-related
-nrf2
-transient
-potential
-trp
+nuclear receptor
 estrogen receptor
+human estrogen receptor alpha
+human estrogen receptor beta
+glucocorticoid receptor
+HERa
 er
 androgen receptor
 ar
 thyroid hormone receptor
+Human progesterone receptor
 tr
 trα
 trβ
@@ -82,6 +60,7 @@ pparα
 pparβ/δ
 pparγ
 retinoid x receptor
+retinoid receptor
 rxr
 rxrα
 rxrβ
@@ -128,4 +107,14 @@ lrh-1
 nuclear factor erythroid 2-related factor 2
 nrf2
 transient receptor potential
-trp
+human estrogen receptor-alpha
+mineralocorticoid receptor
+estrogen receptor gamma
+PgR
+G protein-coupled estrogen receptor
+GPER
+follicle-stimulating hormone receptor
+FSHR
+choriogonadotropin receptor
+steroid receptor
+hormone receptor
