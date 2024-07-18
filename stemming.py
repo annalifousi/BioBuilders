@@ -50,5 +50,5 @@ processed_df = pd.DataFrame(processed_data)
 # Save the processed data to a new CSV file
 processed_df.to_csv('processed_articles.csv', index=False)
 
-# Display the processed DataFrame
-print(processed_df)
+
+print("Processed text has been saved in processed_articles.csv")
