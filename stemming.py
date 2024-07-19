@@ -10,7 +10,7 @@ def clean_and_tokenize(text):
     if pd.isna(text):
         text = ""
     # Remove specified punctuations
-    text = text.translate(str.maketrans('', '', "}{}[]!@#$%^&*()§±;<>?:_"))
+    text = text.translate(str.maketrans('', '', "}{[]!@#$%^&*()§±;<>?:_"))
     # Convert text to lowercase
     text = text.lower()
     # Tokenize the text into sentences
