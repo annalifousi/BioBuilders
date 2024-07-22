@@ -214,23 +214,22 @@ edc_mesh_query = ' OR '.join([f'"{term}"[MeSH Terms]' for term in edc_keywords])
 # Construct the MESH terms part of the query (receptors)
 receptors_mesh_query = ' OR '.join([f'"{term}"[MeSH Terms]' for term in receptors_keywords])
 
-# Construct the MESH terms part of the query (action)
-action_mesh_query = ' OR '.join([f'"{term}"[MeSH Terms]' for term in action_keywords])
+
 
 #combine everything
 # Combine action-related terms with EDC-related terms using AND
 edc_action_receptors_query = ' AND '.join([
-    edc_query,
-    edc_mesh_query,
+    edc_query,  # e.g., 'edc_query'
+    edc_mesh_query,  # e.g., 'edc_mesh_query'
     ' OR '.join([
-        action_query,
-        action_mesh_query
+        action_query  # e.g., 'action_query'
     ]),
     ' OR '.join([
-        receptors_query,
-        receptors_mesh_query
+        receptors_query,  # e.g., 'receptors_query'
+        receptors_mesh_query  # e.g., 'receptors_mesh_query'
     ])
 ])
+
 
 
 #Additional query
@@ -240,7 +239,7 @@ query = (
     #incorporated MIE search in the query
     ') '
     'NOT review[Publication Type]'
-    'AND Homo sapiens[MeSH Terms]'  # Ensuring the search is limited to human studies
+    #'AND Homo sapiens[MeSH Terms]'  # Ensuring the search is limited to human studies
 
     #mesh terms
     'AND ("Reproduction"[MeSH Terms] OR "Endocrine System"[MeSH Terms] OR "chemistry"[MeSH Terms] OR "toxicity"[MeSH Terms]'
