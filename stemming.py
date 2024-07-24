@@ -43,9 +43,9 @@ def clean_and_tokenize(text):
 # Load the entity names from combined_edc_catalog.tsv and receptors.tsv
 combined_edc_catalog = pd.read_csv('combined_edc_catalog.tsv', sep='\t')
 receptors = pd.read_csv('receptors.tsv', sep='\t')
-
+targets = pd.read_csv('standardized_edc_targets.tsv', sep='\t')
 # Combine the entity names from both files into a set for fast membership checking
-entities = set(combined_edc_catalog['Name'].str.lower()).union(set(receptors['Name'].str.lower()))
+entities = set(combined_edc_catalog['Name'].str.lower()).union(receptors['Name'].str.lower()).union(set(targets['Name'].str.lower()))
 
 # Load the articles CSV file
 df = pd.read_csv('articles.csv')

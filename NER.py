@@ -1,3 +1,4 @@
+
 import pandas as pd
 import spacy
 from scispacy.abbreviation import AbbreviationDetector
@@ -24,8 +25,15 @@ def load_terms(filename):
 print("Loading EDC terms from combined_edc_catalog.tsv...")
 edc_terms = load_terms('combined_edc_catalog.tsv')
 
-print("Loading receptor terms from receptors.tsv...")
-receptor_terms = load_terms('receptors.tsv')
+print("Loading receptor terms from standardized_edc_targets.tsv...")
+receptor_terms = load_terms('standardized_edc_targets.tsv')
+
+# Load additional receptor terms and combine with receptor_terms
+print("Loading additional receptor terms from receptors.tsv...")
+additional_receptor_terms = load_terms('receptors.tsv')
+
+# Combine receptor terms and remove duplicates
+receptor_terms.update(additional_receptor_terms)
 
 # Function to perform NER and add results to the table
 def ner(text, pmid, sentence_id, sentence_map, model):
@@ -51,12 +59,12 @@ def ner(text, pmid, sentence_id, sentence_map, model):
             if ent_text in edc_terms:
                 ent_label = "ENDOCRINE_DISRUPTING_CHEMICAL"
             elif ent_text in receptor_terms:
-                ent_label = "RECEPTOR"
+                ent_label = "TARGET"
             else:
                 ent_label = ent.label_
 
             # Filter entities by specific classes
-            if ent_label in ["ENDOCRINE_DISRUPTING_CHEMICAL", "RECEPTOR"]:
+            if ent_label in ["ENDOCRINE_DISRUPTING_CHEMICAL", "TARGET"]:
                 # Add entity to the sentence_map dictionary
                 entity_key = (pmid, sentence_id, ent_text)
                 if entity_key not in sentence_map:
@@ -84,7 +92,7 @@ def extract_entities_from_title(title, pmid, sentence_map, model):
         if ent_text in edc_terms:
             ent_label = "ENDOCRINE_DISRUPTING_CHEMICAL"
         elif ent_text in receptor_terms:
-            ent_label = "RECEPTOR"
+            ent_label = "TARGET"
         else:
             continue
 
@@ -128,7 +136,7 @@ for index, row in df.iterrows():
     sentence = str(sentence)
 
     # Extract entities from the title
-    print(f"Extracting entities from title for row {index + 1}/{len(df_subset)} - PM ID: {pmid}")
+    print(f"Extracting entities from title for row {index + 1}/{len(df)} - PM ID: {pmid}")
     extract_entities_from_title(title, pmid, sentence_map, nlp_bi)
     extract_entities_from_title(title, pmid, sentence_map, nlp_bc)
     
@@ -142,7 +150,7 @@ for index, row in df.iterrows():
     # Process each sentence individually
     for sent_id, sent in enumerate(sentences, start=sentence_id):
         # Print progress
-        print(f"Processing sentence {sent_id} in abstract for row {index + 1}/{len(df_subset)} - PM ID: {pmid}")
+        print(f"Processing sentence {sent_id} in abstract for row {index + 1}/{len(df)} - PM ID: {pmid}")
 
         # Apply NER to each sentence using both models
         ner(sent, pmid, sent_id, sentence_map, nlp_bi)

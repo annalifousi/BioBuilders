@@ -181,8 +181,8 @@ all_edc_names_df = pd.DataFrame(list(all_edc_names), columns=['Name'])
 all_edc_names_df.to_csv('combined_edc_catalog.tsv', sep='\t', index=False)
 
 # Read the combined TSV file into a DataFrame
-tsv_file_path = 'combined_edc_catalog.tsv'
-combined_edc_df = pd.read_csv(tsv_file_path, sep='\t')
+combined_edc_catalog = 'combined_edc_catalog.tsv'
+combined_edc_df = pd.read_csv(combined_edc_catalog, sep='\t')
 
 edc_keywords = combined_edc_df['Name'].tolist()
 
@@ -190,6 +190,23 @@ edc_keywords = combined_edc_df['Name'].tolist()
 receptors_file_path = 'receptors.tsv'
 receptors_df = pd.read_csv(receptors_file_path, sep='\t')
 receptors_keywords = receptors_df['Name'].tolist()
+
+
+#add the targets from chembl
+chembl_targets ='standardized_edc_targets.tsv'
+chembl_df = pd.read_csv(chembl_targets, sep='\t')
+chembl_df = pd.DataFrame(list(chembl_df), columns=['Name'])
+chembl_keywords = chembl_df['Name'].tolist()
+
+#combine the TARGETS
+# Convert lists to sets to find the union
+all_targets = set(receptors_keywords).union(set(chembl_keywords))
+# Convert the set back to a DataFrame
+all_targets_df = pd.DataFrame(list(all_targets), columns=['Name'])
+# Optionally, if you need the combined list for other purposes
+target_keywords = all_targets_df['Name'].tolist()
+
+
 
 #Add the activity query in the pipeline
 action_file_path = 'edc_vocabulary.tsv'
@@ -201,10 +218,11 @@ action_keywords = action_df['Name'].tolist()
 edc_query = ' OR '.join([f'"{keyword}"[Title/Abstract]' for keyword in edc_keywords])
 
 # Construct the keyword part of the query (receptors)
-receptors_query = ' OR '.join([f'"{keyword}"[Title/Abstract]' for keyword in receptors_keywords])
-
-# Construct the keyword part of the query (receptors)
 action_query = ' OR '.join([f'"{keyword}"[Title/Abstract]' for keyword in action_keywords])
+
+target_query = ' OR '.join([f'"{keyword}"[Title/Abstract]' for keyword in target_keywords])
+
+
 
 
 # MESH TERMS
@@ -212,46 +230,43 @@ action_query = ' OR '.join([f'"{keyword}"[Title/Abstract]' for keyword in action
 edc_mesh_query = ' OR '.join([f'"{term}"[MeSH Terms]' for term in edc_keywords])
 
 # Construct the MESH terms part of the query (receptors)
-receptors_mesh_query = ' OR '.join([f'"{term}"[MeSH Terms]' for term in receptors_keywords])
+all_targets_mesh_query = ' OR '.join([f'"{term}"[MeSH Terms]' for term in target_keywords])
 
 
 
 #combine everything
+#Additional query
+# Entrez searching/ getting xml file with articles
 # Combine action-related terms with EDC-related terms using AND
-edc_action_receptors_query = ' AND '.join([
+edc_action_targets_query = ' AND '.join([
     edc_query,  # e.g., 'edc_query'
     edc_mesh_query,  # e.g., 'edc_mesh_query'
     ' OR '.join([
         action_query  # e.g., 'action_query'
     ]),
     ' OR '.join([
-        receptors_query,  # e.g., 'receptors_query'
-        receptors_mesh_query  # e.g., 'receptors_mesh_query'
+        target_query,  # e.g., 'target_query'
+        all_targets_mesh_query  # e.g., 'all_targets_mesh_query'
     ])
 ])
 
-
-
-#Additional query
-# Entrez searching/ getting xml file with articles
+# Additional query construction
 query = (
     '("Endocrine Disruptors"[MeSH Terms] OR "endocrine disrupting chemicals"[Title/Abstract] OR "EDCs"[Title/Abstract] OR "hormonally active agents"[Title/Abstract] OR "Endocrine disrupting compounds"[Title/Abstract]) '
-    #incorporated MIE search in the query
+    # Incorporated MIE search in the query
     ') '
     'NOT review[Publication Type]'
-    #'AND Homo sapiens[MeSH Terms]'  # Ensuring the search is limited to human studies
+    # 'AND Homo sapiens[MeSH Terms]'  # Uncomment if you want to limit to human studies
 
-    #mesh terms
+    # MESH terms
     'AND ("Reproduction"[MeSH Terms] OR "Endocrine System"[MeSH Terms] OR "chemistry"[MeSH Terms] OR "toxicity"[MeSH Terms]'
     'OR "Disruptors, Endocrine"[MeSH Terms] OR "Endocrine Disruptor"[MeSH Terms] OR "Endocrine Disrupting Chemical"[MeSH Terms] OR "Chemical, Endocrine Disrupting"[MeSH Terms] OR "Disrupting Chemical, Endocrine"[MeSH Terms] OR "Endocrine Disruptor Effect"[MeSH Terms] OR "Endocrine Disruptor Effect"[MeSH Terms]'
-    'OR "Water pollutants"[MeSH Terms] OR "Herbicides"[MeSH Terms] OR "Pesticides"[MeSH Terms] OR  "Gonadal Steroid Hormones"[MeSH Terms] OR "fertility"[MeSH Terms] OR "infertility"[MeSH Terms] OR "Androgen antagonists"[MeSH Terms] OR "astrogen antagonists"[MeSH Terms] OR "estrogen agonists"[MeSH Terms] OR "androgen agonists"[MeSH Terms]) '
+    'OR "Water pollutants"[MeSH Terms] OR "Herbicides"[MeSH Terms] OR "Pesticides"[MeSH Terms] OR "Gonadal Steroid Hormones"[MeSH Terms] OR "fertility"[MeSH Terms] OR "infertility"[MeSH Terms] OR "Androgen antagonists"[MeSH Terms] OR "estrogen antagonists"[MeSH Terms] OR "estrogen agonists"[MeSH Terms] OR "androgen agonists"[MeSH Terms]) '
 )
 
+# Combine with action-related terms
+final_query = f'({query}) OR ({edc_action_targets_query})'
 
-
-final_query = f'({query}) OR '.join([
-    edc_action_receptors_query
-])
 xml_path = './articles_tool.xml'
 excel_path = './query_results.xlsx'
 
