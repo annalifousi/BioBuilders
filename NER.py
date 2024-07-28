@@ -1,6 +1,6 @@
-
 import pandas as pd
 import spacy
+from spacy.pipeline import Sentencizer
 from scispacy.abbreviation import AbbreviationDetector
 import en_ner_bionlp13cg_md
 import en_ner_bc5cdr_md
@@ -9,18 +9,28 @@ import en_ner_bc5cdr_md
 print("Loading models...")
 nlp_bi = en_ner_bionlp13cg_md.load()
 nlp_bc = en_ner_bc5cdr_md.load()
+nlp_custom = spacy.load('/Users/annalifousihotmailcom/python/BioBuilders/model-best')  # Load your custom model here
 print("Models loaded successfully.")
 
 # Add AbbreviationDetector to each model's pipeline
 print("Adding AbbreviationDetector...")
 nlp_bi.add_pipe("abbreviation_detector")
 nlp_bc.add_pipe("abbreviation_detector")
+nlp_custom.add_pipe("abbreviation_detector")  # Add AbbreviationDetector to your custom model
 print("AbbreviationDetector added successfully.")
+
+# Add a sentencizer to the custom model if it does not have sentence boundaries set
+if "sentencizer" not in nlp_custom.pipe_names:
+    print("Adding Sentencizer to custom model...")
+    nlp_custom.add_pipe("sentencizer", before="ner")  # Add the sentencizer before the NER component
+    print("Sentencizer added successfully.")
+
 
 # Load EDC and receptor terms
 def load_terms(filename):
     df = pd.read_csv(filename, sep='\t')
     return set(df['Name'].str.lower())
+
 
 print("Loading EDC terms from combined_edc_catalog.tsv...")
 edc_terms = load_terms('combined_edc_catalog.tsv')
@@ -35,11 +45,12 @@ additional_receptor_terms = load_terms('receptors.tsv')
 # Combine receptor terms and remove duplicates
 receptor_terms.update(additional_receptor_terms)
 
+
 # Function to perform NER and add results to the table
 def ner(text, pmid, sentence_id, sentence_map, model):
     # Process document with the given model
     doc = model(text)
-    
+
     # Process abbreviations and create a mapping
     abbreviations = {str(abrv).lower(): str(abrv._.long_form).lower() for abrv in doc._.abbreviations}
 
@@ -50,7 +61,7 @@ def ner(text, pmid, sentence_id, sentence_map, model):
 
     # Reprocess the document with expanded abbreviations
     doc_expanded = model(expanded_text)
-    
+
     # Collect entities with sentence IDs
     for sent in doc_expanded.sents:
         for ent in sent.ents:
@@ -60,21 +71,25 @@ def ner(text, pmid, sentence_id, sentence_map, model):
                 ent_label = "ENDOCRINE_DISRUPTING_CHEMICAL"
             elif ent_text in receptor_terms:
                 ent_label = "TARGET"
+            elif ent.label_ == "ACTIVITY":  # Check if the entity is tagged as "ACTIVITY"
+                ent_label = "ACTIVITY"
+                print(f"ACTIVITY found: {ent_text}")
             else:
                 ent_label = ent.label_
 
             # Filter entities by specific classes
-            if ent_label in ["ENDOCRINE_DISRUPTING_CHEMICAL", "TARGET"]:
+            if ent_label in ["ENDOCRINE_DISRUPTING_CHEMICAL", "TARGET", "ACTIVITY"]:
                 # Add entity to the sentence_map dictionary
                 entity_key = (pmid, sentence_id, ent_text)
                 if entity_key not in sentence_map:
                     sentence_map[entity_key] = ent_label
 
+
 # Function to extract entities from the title
 def extract_entities_from_title(title, pmid, sentence_map, model):
     # Process the title with the given model
     doc = model(title)
-    
+
     # Process abbreviations and create a mapping
     abbreviations = {str(abrv).lower(): str(abrv._.long_form).lower() for abrv in doc._.abbreviations}
 
@@ -85,7 +100,7 @@ def extract_entities_from_title(title, pmid, sentence_map, model):
 
     # Reprocess the title with expanded abbreviations
     doc_expanded = model(expanded_title)
-    
+
     # Check for entities in the title
     for ent in doc_expanded.ents:
         ent_text = ent.text.lower()
@@ -93,6 +108,9 @@ def extract_entities_from_title(title, pmid, sentence_map, model):
             ent_label = "ENDOCRINE_DISRUPTING_CHEMICAL"
         elif ent_text in receptor_terms:
             ent_label = "TARGET"
+        elif ent.label_ == "ACTIVITY":  # Check if the entity is tagged as "ACTIVITY"
+            ent_label = "ACTIVITY"
+            print(f"ACTIVITY found in title: {ent_text}")
         else:
             continue
 
@@ -100,6 +118,7 @@ def extract_entities_from_title(title, pmid, sentence_map, model):
         entity_key = (pmid, "title", ent_text)
         if entity_key not in sentence_map:
             sentence_map[entity_key] = ent_label
+
 
 # Read the CSV file
 print("Reading CSV file...")
@@ -139,14 +158,15 @@ for index, row in df.iterrows():
     print(f"Extracting entities from title for row {index + 1}/{len(df)} - PM ID: {pmid}")
     extract_entities_from_title(title, pmid, sentence_map, nlp_bi)
     extract_entities_from_title(title, pmid, sentence_map, nlp_bc)
-    
+    extract_entities_from_title(title, pmid, sentence_map, nlp_custom)  # Use your custom model
+
     # Process the abstract
     doc = nlp_bi(sentence)  # Use SpaCy's built-in sentence segmentation
     sentences = [sent.text for sent in doc.sents]
 
     # Track total sentences
     total_sentences += len(sentences)
-    
+
     # Process each sentence individually
     for sent_id, sent in enumerate(sentences, start=sentence_id):
         # Print progress
@@ -155,7 +175,8 @@ for index, row in df.iterrows():
         # Apply NER to each sentence using both models
         ner(sent, pmid, sent_id, sentence_map, nlp_bi)
         ner(sent, pmid, sent_id, sentence_map, nlp_bc)
-        
+        ner(sent, pmid, sent_id, sentence_map, nlp_custom)  # Use your custom model
+
         # Increment the counter for each sentence processed
         sentences_processed += 1
 

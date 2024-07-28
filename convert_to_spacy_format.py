@@ -1,48 +1,55 @@
-import csv
-import re
+import pandas as pd
 import json
+import os
+from tqdm import tqdm
+import spacy
+from spacy.tokens import DocBin
 
+# Load the data
+with open('annotations.json', 'r') as f:
+    data = json.load(f)
 
-def extract_entities(sentence, tagged_words):
-    entities = []
-    for tagged_word in tagged_words:
-        if '(' in tagged_word and ')' in tagged_word:
-            word, tag = tagged_word.split('(')
-            tag = tag.rstrip(')')
-            start = sentence.find(word)
-            if start != -1:
-                end = start + len(word)
-                entities.append((start, end, tag))
-    return entities
+entity_name = "ACTIVITY"
 
+train_data = data['annotations']
+train_data = [tuple(i) for i in train_data]
 
-def create_spacy_training_data(csv_file_path):
-    TRAIN_DATA = []
+for i in train_data:
+    if i[1]['entities'] == []:
+        i[1]['entities'] = [(0, 0, entity_name)]  # List with one tuple
+    else:
+        i[1]['entities'] = [tuple(entity) for entity in i[1]['entities']]
 
-    with open(csv_file_path, 'r', encoding='utf-8') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            sentence = row['Sentence']
-            tagged_words = row['Common Words in Vocabulary 1'].split(', ') + row['Common Words in Vocabulary 2'].split(
-                ', ')
-            entities = extract_entities(sentence, tagged_words)
-            TRAIN_DATA.append((sentence, {'entities': entities}))
+# Process the data with spaCy
+nlp = spacy.load("en_core_web_sm")
+db = DocBin()
 
-    return TRAIN_DATA
+skipped_count = 0
 
+for text, annot in tqdm(train_data):
+    doc = nlp.make_doc(text)
+    ents = []
+    for entity in annot.get("entities", []):
+        if isinstance(entity, (list, tuple)) and len(entity) == 3:
+            start, end, label = entity
+            if start < end:  # Ensure valid span
+                span = doc.char_span(start, end, label=label, alignment_mode="contract")
+                if span is not None:
+                    ents.append(span)
+                else:
+                    print(f"Skipping entity with invalid span: {entity}")
+                    skipped_count += 1
+            else:
+                print(f"Skipping entity with zero or invalid range: {entity}")
+                skipped_count += 1
+        else:
+            print(f"Unexpected entity format: {entity}")
+            skipped_count += 1
+    doc.ents = ents
+    db.add(doc)
 
-def save_training_data_to_file(training_data, output_file_path):
-    with open(output_file_path, 'w', encoding='utf-8') as file:
-        json.dump(training_data, file, ensure_ascii=False, indent=4)
-
-
-if __name__ == '__main__':
-    csv_file_path = 'report.csv'  # Replace with your file path
-    output_file_path = 'spacy_training_data.json'  # The output file path
-    training_data = create_spacy_training_data(csv_file_path)
-
-    # Save the training data to a file
-    save_training_data_to_file(training_data, output_file_path)
-
-    # Print a message to indicate completion
-    print(f'Training data saved to {output_file_path}')
+# Save the DocBin object to disk
+save_path = '/Users/annalifousihotmailcom/python/BioBuilders/train.spacy'
+db.to_disk(save_path)
+print(f"DocBin saved to {save_path}")
+print(f"Total skipped entities: {skipped_count}")
