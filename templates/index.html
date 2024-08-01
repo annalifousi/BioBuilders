@@ -3,8 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentences Data</title>
+    <title>EDC and Target Search</title>
     <style>
+        body {
+            font-family: Calibri, sans-serif;
+            padding: 20px;
+        }
+        .search-container {
+            max-width: 600px;
+            margin: auto;
+        }
+        .results {
+            margin-top: 20px;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -16,34 +27,62 @@
             padding: 8px;
             text-align: left;
         }
-        th {
-            background-color: #f2f2f2;
-        }
     </style>
 </head>
 <body>
-    <h1>EnDiCo NLP DataBase</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Activity</th>
-                <th>Endocrine Disrupting Chemical</th>
-                <th>Target</th>
-                <th>Counts</th>
-                <th>Articles</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for result in results %}
-            <tr>
-                <td>{{ result.activity }}</td>
-                <td>{{ result.endocrine_disrupting_chemical }}</td>
-                <td>{{ result.target }}</td>
-                <td>{{ result.counts }}</td>
-                <td>{{ result.articles }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="search-container">
+        <h1>EnDiCo NLP DataBase</h1>
+        <input type="text" id="search-query" placeholder="Enter EDC or Target">
+        <button onclick="performSearch()">Search</button>
+        <form id="upload-form" enctype="multipart/form-data">
+            <input type="file" id="file-input" name="file">
+            <button type="button" onclick="uploadFile()">Upload and Search</button>
+        </form>
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        function performSearch() {
+            const query = document.getElementById('search-query').value;
+            let url = `/search?query=${query}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => displayResults(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        function uploadFile() {
+            const formData = new FormData(document.getElementById('upload-form'));
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => displayResults(data))
+            .catch(error => console.error('Error:', error));
+        }
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            if (data.error) {
+                resultsDiv.innerHTML = `<p>${data.error}</p>`;
+            } else {
+                let tableHtml = '<table><tr><th>Activity</th><th>EDC</th><th>Target</th><th>Counts</th><th>Articles</th></tr>';
+                data.forEach(row => {
+                    tableHtml += `<tr>
+                        <td>${row.activity}</td>
+                        <td>${row.endocrine_disrupting_chemical}</td>
+                        <td>${row.target}</td>
+                        <td>${row.counts}</td>
+                        <td>${row.articles}</td>
+                    </tr>`;
+                });
+                tableHtml += '</table>';
+                resultsDiv.innerHTML = tableHtml;
+            }
+        }
+    </script>
 </body>
 </html>

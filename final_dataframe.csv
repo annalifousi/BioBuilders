@@ -1,0 +1,228 @@
+ACTIVITY,ENDOCRINE_DISRUPTING_CHEMICAL,TARGET,counts,articles
+abolished,benzyl butyl phthalate,liver,1,37819454
+abolished,genistein,ahr,1,26568065
+accelerated,"2,3,7,8-tetrachlorodibenzo-p-dioxin",ahr,1,19490992
+activate,methylparaben,glucocorticoid receptor,1,28527915
+activated,"2,3,7,8-tetrachlorodibenzo-p-dioxin",ahr,1,21270426
+activated,bpa,ahr,1,30275377
+activating,bpa,adam17,1,30065191
+activation,estrogen,pregnane x receptor,1,31683213
+activity,estrogen,brain,1,18174949
+activity,estrogen,estrogen receptor,4,"10090707, 18174949, 28319747, 38984714"
+activity,estrogen,glucocorticoid receptor,1,28060336
+activity,methoxychlor,estrogen receptor,1,10090707
+adequate,hexachlorobenzene,blood,1,26232659
+adequate,hexachlorobenzene,serum,1,26232659
+adequate,polychlorinated biphenyls,blood,1,26232659
+adequate,polychlorinated biphenyls,serum,1,26232659
+affect,arsenic,estrogen receptor,1,27338438
+affect,bisphenol,brain,1,28747197
+affect,bisphenol,estrogen receptor,1,27338438
+affect,bpa,brain,2,"22707478, 28747197"
+affect,estrogen,estrogen receptor,1,27338438
+affect,mirex,serum,1,24192044
+affect,steroid,brain,1,22707478
+affect,steroid,plasma,1,21545743
+affect,testosterone,plasma,1,21545743
+affect,zearalenone,estrogen receptor,1,27338438
+agonist activity,estrogen,estrogen receptor,1,32050122
+agonist and antagonist activities,estrogen,estrogen receptor,1,33064576
+agonist and antagonist activities,estrogen,glucocorticoid receptor,1,33064576
+alter,estrogen,estrogen receptor,2,24586459
+altered,bpa,brain,1,23457122
+altered,dieldrin,estrogen receptor alpha,1,16765462
+altered,dopamine,androgen receptor,1,31491443
+altered,estrogen,androgen receptor,1,31491443
+altered,estrogen,estrogen receptor,1,19589859
+altered,estrogen,estrogen receptor alpha,1,16765462
+altered,polychlorinated biphenyls,brain,1,27794483
+altered,progesterone,androgen receptor,1,31491443
+altered,steroid,androgen receptor,1,31491443
+alters,bisphenol,brain,2,28005399
+alters,bisphenol,estrogen receptor,2,23457122
+alters,bpa,liver,1,26517871
+alters,bpa,serum,1,26517871
+alters,estrogen,estrogen receptor,2,23457122
+alters,methoxyacetic acid,histone deacetylase,1,20049119
+antagonized,estrogen,estrogen receptor,1,10090707
+antagonized,methoxychlor,estrogen receptor,1,10090707
+associated,bpa,serum,1,20797929
+associated,edcs,liver,1,35793087
+associated,mono-benzyl phthalate,blood,1,26380974
+associated,phthalate,blood,1,26380974
+associated,polychlorinated biphenyls,liver,1,35793087
+associated,testosterone,serum,1,38823155
+attributed,steroid,blood,1,23785499
+bind,estrogen,estrogen receptor,1,17010207
+bind,estrogen,estrogen receptor alpha,1,20623170
+binding,estrogen,estrogen receptor,4,"9721254, 11781162, 24928889"
+binding,estrogen,human estrogen receptor alpha,2,20821664
+binding,xenoestrogen,human estrogen receptor alpha,2,20821664
+bindingactivation,estrogen,estrogen receptor,1,33448467
+bioavailability,resveratrol,ahr,1,31489946
+cause,estrogen,estrogen receptor,1,23707773
+caused,cortisol,serum,1,32353954
+caused,estrogen,estrogen receptor,1,19589859
+changed,testosterone,serum,1,26960901
+changes,"2,3,7,8-tetrachlorodibenzo-p-dioxin",ahr,1,26568065
+changes,"2,3,7,8-tetrachlorodibenzo-p-dioxin",estrogen receptor,1,26568065
+changes,bisphenol-a,brain,2,32926169
+changes,bpa,brain,1,28890130
+changes,cholesterol,serum,1,35126815
+changes,dichlorodiphenyltrichloroethane,lymphocyte,1,38085400
+changes,estradiol,ahr,1,26568065
+changes,estradiol,estrogen receptor,1,26568065
+changes,estrogen,ahr,1,26568065
+changes,estrogen,brain,1,23716699
+changes,estrogen,estrogen receptor,2,"26568065, 26876344"
+changes,estrogen,pregnane x receptor,1,31683213
+changes,genistein,ahr,1,26568065
+changes,genistein,estrogen receptor,1,26568065
+changes,progesterone,ahr,1,26568065
+changes,progesterone,brain,1,27413107
+changes,progesterone,estrogen receptor,1,26568065
+circulating,endocrine disruptors,blood,1,23667484
+circulating,phthalate,blood,1,29690855
+controlled,phthalate,serum,1,38754604
+converge,bisphenol,estrogen receptor,1,38861567
+converge,bpa,adam17,1,30065191
+converge,estrogen,estrogen receptor,1,38861567
+cyclicity,estradiol,plasma,1,30066076
+cyclicity,progesterone,plasma,1,30066076
+decrease,bpa,brain,1,32926169
+decrease,steroid,plasma,1,30066076
+decrease,testosterone,androgen receptor,1,37529606
+decrease,testosterone,plasma,1,25772865
+decreased,bpa,brain,2,"31835337, 32940650"
+decreased,dopamine,brain,1,31835337
+decreased,estradiol,serum,1,27149376
+decreased,estrogen,androgen receptor,2,"29323181, 37400041"
+decreased,estrogen,estrogen receptor,2,"26593928, 29323181"
+decreased,estrogen,pgr,1,37400041
+decreased,genistein,ahr,1,26568065
+decreased,phenols,liver,1,35793087
+decreased,phthalate,serum,1,29606598
+decreased,progesterone,androgen receptor,1,37400041
+decreased,progesterone,pgr,1,37400041
+decreased,progesterone,serum,1,27149376
+decreased,testosterone,serum,2,"25210847, 27149376"
+detect,estrogen,estrogen receptor,2,24747293
+detected,phenol,liver,1,24752748
+determining,steroid,blood,1,23785499
+detrimental,bpa,brain,1,23337607
+diesters,phenols,serum,1,34991249
+diesters,triclocarban,serum,1,34991249
+disrupt,bpa,brain,5,"23425943, 23716699, 27841950, 28890130, 31835337"
+disrupt,dopamine,brain,1,31835337
+disrupt,steroid,brain,1,28890130
+disrupted,aroclor 1254,brain,1,36257292
+disruption,estrogen,brain,1,31251963
+disruption,estrogen,estrogen receptor,3,"31251963, 32764486"
+donated,perfluorodecanoic acid,serum,1,31730470
+donated,perfluorononanoic acid,serum,1,31730470
+donated,perfluorooctanoic acid,serum,1,31730470
+duration,beta-hexachlorocyclohexane,serum,1,20671963
+duration,hexachlorobenzene,serum,1,20671963
+duration,polychlorinated biphenyls,serum,1,20671963
+effects,bpa,ahr,1,23928317
+effects,edcs,serum,1,29458364
+effects,estradiol,ahr,1,23928317
+effects,estrogen,estrogen receptor,1,26876344
+effects,neonicotinoids,thyroid hormone receptor,1,29952068
+expressed,"2,4-d",peroxisome proliferator-activated receptor,1,26838045
+identifying,endocrine disruptors,human estrogen receptor alpha,2,38704805
+identifying,estrogen,human estrogen receptor alpha,2,38704805
+il1β,bpa,interleukin 2,1,26911702
+immediate,bpa,brain,1,22707478
+immediate,estrogen,estrogen receptor alpha,1,32692847
+immunoreactivity,chrysin,androgen receptor,1,31131507
+impacts,bisphenol,brain,1,25051448
+impacts,bpa,brain,1,25051448
+implications,endocrine disruptors,human estrogen receptor alpha,2,38704805
+implications,estrogen,human estrogen receptor alpha,2,38704805
+increase,corticosterone,plasma,1,16818245
+increase,estrogen,estrogen receptor,1,28005399
+increased,bpa,ahr,1,30275377
+increased,bpa,brain,2,"31292004, 32940650"
+increased,bpa,estrogen receptor,1,26863571
+increased,bpa,serum,2,"24950052, 32319667"
+increased,chrysin,androgen receptor,1,31131507
+increased,cortisol,serum,1,32353954
+increased,estradiol,cytochrome c,1,27129868
+increased,estradiol,serum,1,18197302
+increased,estrogen,androgen receptor,1,29323181
+increased,estrogen,brain,1,34884750
+increased,estrogen,estrogen receptor,4,"26593928, 26863571, 29323181, 30853570"
+increased,estrogen,estrogen receptor alpha,1,37127253
+increased,estrogen,liver,3,"18470304, 30853570"
+increased,mono-n-butyl phthalate,serum,1,25348326
+increased,steroid,liver,1,33967964
+increased,testosterone,serum,2,"25210847, 26960901"
+induce,bpa,brain,1,31835337
+induce,estrogen,estrogen receptor,1,30676078
+induced,bpa,brain,1,30761779
+induced,bpa,egfr,1,32353937
+induced,bpa,serum,1,30761779
+induced,estrogen,androgen receptor,1,29323181
+induced,estrogen,estrogen receptor,1,29323181
+induced,estrogen,liver,1,26448558
+induced,estrogen,serum,1,16674832
+induced,steroid,plasma,1,30066076
+influenced,estrogen,brain,1,21554883
+influenced,steroid,brain,1,24352099
+inhibit,bpa,ahr,1,23928317
+inhibit,estradiol,ahr,1,23928317
+inhibitory effect,"2,3,7,8-tetrachlorodibenzo-p-dioxin",ahr,1,26568065
+inhibitory effect,"2,3,7,8-tetrachlorodibenzo-p-dioxin",estrogen receptor,1,26568065
+inhibitory effect,estradiol,ahr,1,26568065
+inhibitory effect,estradiol,estrogen receptor,1,26568065
+inhibitory effect,estrogen,ahr,1,26568065
+inhibitory effect,estrogen,estrogen receptor,1,26568065
+inhibitory effect,genistein,ahr,2,26568065
+inhibitory effect,genistein,estrogen receptor,1,26568065
+inhibitory effect,progesterone,ahr,1,26568065
+inhibitory effect,progesterone,estrogen receptor,1,26568065
+inhibits,methoxyacetic acid,histone deacetylase,1,20049119
+initially,perfluorohexanesulfonic acid,serum,1,28111093
+initially,perfluorononanoic acid,serum,1,28111093
+integrating,estrogen,estrogen receptor,2,26865669
+investigate,"2,4-d",peroxisome proliferator-activated receptor,1,26838045
+investigate,bisphenol-a,plasma,1,25913709
+investigate,bpa,brain,1,23337607
+investigate,bpa,liver,1,32319667
+investigate,edcs,skin,1,35159304
+investigate,estrogen,estrogen receptor,2,"26876344, 38984714"
+investigate,polychlorinated biphenyls,serum,1,25965908
+involving,estrogen,estrogen receptor,1,26061088
+masculinizing,estrogen,estrogen receptor,1,23457122
+mediate,estrogen,estrogen receptor,1,24886565
+mediated,estrogen,brain,1,15743723
+mediated,estrogen,estrogen receptor,2,"24886565, 31179481"
+numbers,estrogen,androgen receptor,1,37400041
+numbers,estrogen,pgr,1,37400041
+numbers,progesterone,androgen receptor,1,37400041
+numbers,progesterone,pgr,1,37400041
+reduced,bifenthrin,liver microsomes,1,23983063
+reduced,estrogen,estrogen receptor,1,18275979
+reduced,steroid,liver,1,33967964
+reduced,testosterone,serum,2,"21737371, 38823155"
+regulation,bisphenol,brain,1,30054528
+regulation,bpa,brain,1,30054528
+reported,bisphenol,brain,1,25051448
+reported,bpa,brain,1,25051448
+repress,estrogen,estrogen receptor,1,25061109
+sensitivity,estrogen,estrogen receptor,1,24928889
+specificity,estrogen,estrogen receptor,1,28319747
+specificity,estrogen,estrogen receptor alpha,1,25759245
+transactivity,estrogen,estrogen receptor,1,30676078
+transactivity,estrogen,serum,1,16674832
+up to eight,perfluorohexanesulfonic acid,serum,1,33208860
+up to eight,perfluorooctanesulfonic acid,serum,1,33208860
+up to eight,perfluorooctanoic acid,serum,1,33208860
+up-regulated.,estrogen,androgen receptor,1,27149376
+up-regulated.,estrogen,estrogen receptor,1,27149376
+up-regulated.,estrogen,progesterone receptor,1,27149376
+up-regulated.,progesterone,androgen receptor,1,27149376
+up-regulated.,progesterone,estrogen receptor,1,27149376
+up-regulated.,progesterone,progesterone receptor,1,27149376
+upregulation,cortisol,serum,1,32353954

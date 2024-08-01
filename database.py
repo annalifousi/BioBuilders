@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS ner_entities (
 )
 ''')
 
-# Create or update the sentences table with a separate column for ACTIVITY
+# Create or update the sentences table without the catalog column
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS sentences (
     activity TEXT,
@@ -43,7 +43,6 @@ df = pd.read_csv(file_path)
 print(df.head())
 
 # Prepare data for insertion into sentences table
-# Rename columns to match the table schema
 sentences_df = df[['ACTIVITY', 'ENDOCRINE_DISRUPTING_CHEMICAL', 'TARGET', 'counts', 'articles']]
 sentences_df.columns = ['activity', 'endocrine_disrupting_chemical', 'target', 'counts', 'articles']
 
