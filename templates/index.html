@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentences Data</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>EnDiCo NLP DataBase</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Activity</th>
+                <th>Endocrine Disrupting Chemical</th>
+                <th>Target</th>
+                <th>Counts</th>
+                <th>Articles</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+            <tr>
+                <td>{{ result.activity }}</td>
+                <td>{{ result.endocrine_disrupting_chemical }}</td>
+                <td>{{ result.target }}</td>
+                <td>{{ result.counts }}</td>
+                <td>{{ result.articles }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

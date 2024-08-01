@@ -9,7 +9,7 @@ import en_ner_bc5cdr_md
 print("Loading models...")
 nlp_bi = en_ner_bionlp13cg_md.load()
 nlp_bc = en_ner_bc5cdr_md.load()
-nlp_custom = spacy.load('/Users/annalifousihotmailcom/python/BioBuilders/model-best')  # Load your custom model here
+nlp_custom = spacy.load('./model-best')  # Load your custom model here
 print("Models loaded successfully.")
 
 # Add AbbreviationDetector to each model's pipeline
