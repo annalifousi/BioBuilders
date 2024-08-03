@@ -1,9 +1,11 @@
 from flask import Flask, request, render_template, jsonify
+from flask_cors import CORS
 import sqlite3
 import pandas as pd
 from sqlalchemy import create_engine
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS
 
 # Define database path
 db_path = 'ner_results.db'
@@ -12,14 +14,19 @@ db_path = 'ner_results.db'
 def initialize_db():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
+    
+    # Create or update the ner_entities table with the correct schema
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS ner_entities (
-        Entity_EDC TEXT,
-        Entity_TARGET TEXT,
-        Count INTEGER,
+        endocrine_disrupting_chemical TEXT,
+        activity TEXT,
+        target TEXT,
+        counts INTEGER,
         articles INTEGER
     )
     ''')
+    
+    # Create or update the sentences table with the correct schema
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS sentences (
         activity TEXT,
@@ -30,6 +37,7 @@ def initialize_db():
         PRIMARY KEY (activity, endocrine_disrupting_chemical, target)
     )
     ''')
+    
     conn.commit()
     conn.close()
 
@@ -51,6 +59,7 @@ def search():
     SELECT * FROM sentences 
     WHERE endocrine_disrupting_chemical LIKE ? 
     OR target LIKE ?
+    ORDER BY endocrine_disrupting_chemical, activity, target
     """
     params = [f"%{query}%", f"%{query}%"]
     df = pd.read_sql_query(query_str, conn, params=params)
@@ -71,16 +80,21 @@ def upload_file():
     if file:
         # Read the uploaded file
         edcs_or_targets = file.read().decode('utf-8').splitlines()
-
+        
+        if not edcs_or_targets:
+            return jsonify({'error': 'Empty file content'}), 400
+        
         # Connect to the database and filter based on uploaded file
-        engine = create_engine(f'sqlite:///{db_path}')
+        query_placeholders = ','.join(['?'] * len(edcs_or_targets))
         query = f"""
         SELECT * FROM sentences 
-        WHERE endocrine_disrupting_chemical IN ({','.join(['?']*len(edcs_or_targets))}) 
-        OR target IN ({','.join(['?']*len(edcs_or_targets))})
+        WHERE endocrine_disrupting_chemical IN ({query_placeholders}) 
+        OR target IN ({query_placeholders})
+        ORDER BY endocrine_disrupting_chemical, activity, target
         """
         conn = sqlite3.connect(db_path)
-        df = pd.read_sql_query(query, conn, params=edcs_or_targets + edcs_or_targets)
+        params = edcs_or_targets * 2  # List should be twice the length for both placeholders
+        df = pd.read_sql_query(query, conn, params=params)
         conn.close()
 
         # Convert the result to a dictionary for JSON response
@@ -89,6 +103,32 @@ def upload_file():
         return jsonify(result)
     
     return jsonify({'error': 'File upload failed'}), 400
+
+# Route to provide data for network visualization
+@app.route('/network', methods=['GET'])
+def network():
+    target = request.args.get('target', '')
+
+    conn = sqlite3.connect(db_path)
+    query_str = """
+    SELECT * FROM sentences 
+    WHERE target LIKE ?
+    ORDER BY endocrine_disrupting_chemical, activity, target
+    """
+    params = [f"%{target}%"]
+    df = pd.read_sql_query(query_str, conn, params=params)
+    conn.close()
+
+    nodes = [{'data': {'id': target, 'label': target, 'size': 50}}]  # Fixed size for the central node
+    edges = []
+
+    for _, row in df.iterrows():
+        edc = row['endocrine_disrupting_chemical']
+        counts = row['counts']
+        nodes.append({'data': {'id': edc, 'label': edc, 'size': counts}})
+        edges.append({'data': {'source': target, 'target': edc}})
+
+    return jsonify({'nodes': nodes, 'edges': edges})
 
 if __name__ == '__main__':
     app.run(debug=True)

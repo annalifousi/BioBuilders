@@ -9,17 +9,18 @@ db_path = 'ner_results.db'
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
-# Create or update the ner_entities table
+# Create or update the ner_entities table with the correct schema
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS ner_entities (
-    Entity_EDC TEXT,
-    Entity_TARGET TEXT,
-    Count INTEGER,
+    endocrine_disrupting_chemical TEXT,
+    activity TEXT,
+    target TEXT,
+    counts INTEGER,
     articles INTEGER
 )
 ''')
 
-# Create or update the sentences table without the catalog column
+# Create or update the sentences table with the correct schema
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS sentences (
     activity TEXT,
@@ -42,7 +43,7 @@ df = pd.read_csv(file_path)
 # Display the DataFrame to verify the content
 print(df.head())
 
-# Prepare data for insertion into sentences table
+# Prepare data for insertion into the sentences table
 sentences_df = df[['ACTIVITY', 'ENDOCRINE_DISRUPTING_CHEMICAL', 'TARGET', 'counts', 'articles']]
 sentences_df.columns = ['activity', 'endocrine_disrupting_chemical', 'target', 'counts', 'articles']
 

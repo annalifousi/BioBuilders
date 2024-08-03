@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EDC and Target Search</title>
+    <title>EnDiCo NLP Database</title>
     <style>
         body {
             font-family: Calibri, sans-serif;
@@ -12,6 +12,13 @@
         .search-container {
             max-width: 600px;
             margin: auto;
+        }
+        #cy {
+            width: 100%;
+            height: 600px;
+            border: 1px solid black;
+            margin-bottom: 20px;
+            display: none;  /* Hide the visualization container by default */
         }
         .results {
             margin-top: 20px;
@@ -28,27 +35,47 @@
             text-align: left;
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.21.0/cytoscape.min.js"></script>
 </head>
 <body>
     <div class="search-container">
-        <h1>EnDiCo NLP DataBase</h1>
+        <h1>EDC and Target Search</h1>
         <input type="text" id="search-query" placeholder="Enter EDC or Target">
         <button onclick="performSearch()">Search</button>
         <form id="upload-form" enctype="multipart/form-data">
             <input type="file" id="file-input" name="file">
             <button type="button" onclick="uploadFile()">Upload and Search</button>
         </form>
-        <div class="results" id="results"></div>
+        <div id="cy"></div> <!-- Network graph container -->
+        <div class="results" id="results"></div> <!-- Results table container -->
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const searchInput = document.getElementById('search-query');
+            
+            searchInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); // Prevent default action of Enter key (e.g., form submission)
+                    performSearch(); // Call the performSearch function
+                }
+            });
+        });
+
         function performSearch() {
             const query = document.getElementById('search-query').value;
             let url = `/search?query=${query}`;
 
             fetch(url)
                 .then(response => response.json())
-                .then(data => displayResults(data))
+                .then(data => {
+                    displayResults(data);
+                    if (data.length > 0) {
+                        createNetwork(query);
+                    } else {
+                        document.getElementById('cy').style.display = 'none';
+                    }
+                })
                 .catch(error => console.error('Error:', error));
         }
 
@@ -60,7 +87,14 @@
                 body: formData,
             })
             .then(response => response.json())
-            .then(data => displayResults(data))
+            .then(data => {
+                displayResults(data);
+                if (data.length > 0) {
+                    createNetwork(document.getElementById('search-query').value);
+                } else {
+                    document.getElementById('cy').style.display = 'none';
+                }
+            })
             .catch(error => console.error('Error:', error));
         }
 
@@ -69,11 +103,11 @@
             if (data.error) {
                 resultsDiv.innerHTML = `<p>${data.error}</p>`;
             } else {
-                let tableHtml = '<table><tr><th>Activity</th><th>EDC</th><th>Target</th><th>Counts</th><th>Articles</th></tr>';
+                let tableHtml = '<table><tr><th>EDC</th><th>Activity</th><th>Target</th><th>Counts</th><th>Articles</th></tr>';
                 data.forEach(row => {
                     tableHtml += `<tr>
-                        <td>${row.activity}</td>
                         <td>${row.endocrine_disrupting_chemical}</td>
+                        <td>${row.activity}</td>
                         <td>${row.target}</td>
                         <td>${row.counts}</td>
                         <td>${row.articles}</td>
@@ -82,6 +116,51 @@
                 tableHtml += '</table>';
                 resultsDiv.innerHTML = tableHtml;
             }
+        }
+
+        function createNetwork(target) {
+            fetch(`/network?target=${target}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('cy').style.display = 'block';  // Show the visualization container
+                    var cy = cytoscape({
+                        container: document.getElementById('cy'),
+                        elements: {
+                            nodes: data.nodes,
+                            edges: data.edges
+                        },
+                        style: [
+                            {
+                                selector: 'node',
+                                style: {
+                                    'label': 'data(label)',
+                                    'text-valign': 'center',
+                                    'color': '#fff',
+                                    'background-color': 'mapData(counts, 0, 100, #ffcccc, #ff0000)', // Color gradient based on counts
+                                    'text-outline-width': 2,
+                                    'text-outline-color': '#0074D9',
+                                    'width': 'mapData(size, 0, 100, 20, 80)',
+                                    'height': 'mapData(size, 0, 100, 20, 80)'
+                                }
+                            },
+                            {
+                                selector: 'edge',
+                                style: {
+                                    'width': 2, // Fixed thickness for edges
+                                    'line-color': 'mapData(counts, 0, 100, #ffcccc, #ff0000)', // Gradient color based on counts
+                                    'target-arrow-color': 'mapData(counts, 0, 100, #ffcccc, #ff0000)',
+                                    'target-arrow-shape': 'triangle'
+                                }
+                            }
+                        ],
+                        layout: {
+                            name: 'cose',
+                            idealEdgeLength: 100,
+                            nodeOverlap: 20
+                        }
+                    });
+                })
+                .catch(error => console.error('Error:', error));
         }
     </script>
 </body>
