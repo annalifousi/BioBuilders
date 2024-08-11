@@ -1,17 +1,20 @@
 import pandas as pd
 
 # Load the data from the CSV file
-df = pd.read_csv("ner_data.csv")
+df = pd.read_csv("updated_filtered_entity_rec.csv")
 
-# Group by 'PM ID' and 'Sentence id', then aggregate the 'Entity' values based on 'Class'
-grouped_df = df.groupby(['PM ID', 'Sentence id', 'Class'])['Entity'].apply(lambda x: ', '.join(x)).reset_index()
+# Filter the DataFrame to keep only the specified classes
+df = df[df['Label'].isin(['ENDOCRINE_DISRUPTING_CHEMICAL', 'TARGET', 'ACTIVITY'])]
 
-# Pivot the DataFrame
-pivot_df = grouped_df.pivot_table(index=['PM ID', 'Sentence id'], columns='Class', values='Entity', aggfunc='first').reset_index()
+# Group by 'PMID' and 'SentenceID', then aggregate the 'Entity' values by their label
+grouped_df = df.groupby(['PMID', 'SentenceID', 'Label'])['Entity'].apply(lambda x: ', '.join(x)).reset_index()
+
+# Pivot the DataFrame to have each label as a separate column
+pivot_df = grouped_df.pivot_table(index=['PMID', 'SentenceID'], columns='Label', values='Entity', aggfunc='first').reset_index()
 
 # Rename columns for clarity
 pivot_df.columns.name = None
-pivot_df.columns = ['PM ID', 'Sentence id', 'ACTIVITY', 'ENDOCRINE_DISRUPTING_CHEMICAL', 'TARGET']
+pivot_df.columns = ['PMID', 'SentenceID', 'ACTIVITY', 'ENDOCRINE_DISRUPTING_CHEMICAL', 'TARGET']
 
 # Fill NaN values with empty strings
 pivot_df.fillna('', inplace=True)
@@ -36,14 +39,17 @@ final_df = split_column_to_rows(endocrine_df, 'TARGET')
 # Reset index for clean output
 final_df = final_df.reset_index(drop=True)
 
-# Ensure PM IDs are treated as strings
-final_df['PM ID'] = final_df['PM ID'].astype(str)
+# Ensure PMIDs are treated as strings
+final_df['PMID'] = final_df['PMID'].astype(str)
 
 # Group by the relevant columns to count occurrences and collect PMIDs
 interaction_summary = final_df.groupby(['ACTIVITY', 'ENDOCRINE_DISRUPTING_CHEMICAL', 'TARGET']).agg(
-    counts=('PM ID', 'size'),
-    articles=('PM ID', lambda x: ', '.join(x.unique()))
+    counts=('PMID', 'size'),
+    articles=('PMID', lambda x: ', '.join(x.unique()))
 ).reset_index()
+
+# Reorder the columns
+interaction_summary = interaction_summary[['ENDOCRINE_DISRUPTING_CHEMICAL', 'ACTIVITY', 'TARGET', 'counts', 'articles']]
 
 # Save the DataFrame to a CSV file
 interaction_summary.to_csv('final_dataframe.csv', index=False)
