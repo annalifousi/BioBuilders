@@ -1,57 +1,72 @@
 import pandas as pd
+from itertools import product
 
 # Load the data from the CSV file
-df = pd.read_csv("updated_filtered_entity_rec.csv")
+df = pd.read_csv('filtered_sentences.csv', sep=',')
 
-# Filter the DataFrame to keep only the specified classes
-df = df[df['Label'].isin(['ENDOCRINE_DISRUPTING_CHEMICAL', 'TARGET', 'ACTIVITY'])]
+# Pivot table to get the desired format
+pivot_table = pd.pivot_table(df, 
+                             index=['PMID', 'Sentence'], 
+                             columns='Class', 
+                             values='Entity', 
+                             aggfunc=lambda x: ', '.join(x),
+                             fill_value='')
 
-# Group by 'PMID' and 'SentenceID', then aggregate the 'Entity' values by their label
-grouped_df = df.groupby(['PMID', 'SentenceID', 'Label'])['Entity'].apply(lambda x: ', '.join(x)).reset_index()
-
-# Pivot the DataFrame to have each label as a separate column
-pivot_df = grouped_df.pivot_table(index=['PMID', 'SentenceID'], columns='Label', values='Entity', aggfunc='first').reset_index()
+# Reset index to make 'PMID' and 'Sentence' columns again
+pivot_table = pivot_table.reset_index()
 
 # Rename columns for clarity
-pivot_df.columns.name = None
-pivot_df.columns = ['PMID', 'SentenceID', 'ACTIVITY', 'ENDOCRINE_DISRUPTING_CHEMICAL', 'TARGET']
+pivot_table.columns.name = None
+pivot_table.columns = ['PMID', 'Sentence', 'Activity', 'EDC', 'Target']
 
-# Fill NaN values with empty strings
-pivot_df.fillna('', inplace=True)
+# Re-arrange columns to EDC, Activity, Target, PMID, Sentence
+pivot_table = pivot_table[['EDC', 'Activity', 'Target', 'PMID', 'Sentence']]
 
-# Function to split columns into separate rows
-def split_column_to_rows(df, column):
-    rows = []
+# Function to split and expand the rows
+def expand_rows(df):
+    expanded_rows = []
+    
     for _, row in df.iterrows():
-        entities = row[column].split(', ')
-        for entity in entities:
-            if entity:
-                new_row = row.copy()
-                new_row[column] = entity
-                rows.append(new_row)
-    return pd.DataFrame(rows)
+        edc_list = row['EDC'].split(', ')
+        target_list = row['Target'].split(', ')
+        
+        for edc, target in product(edc_list, target_list):
+            expanded_rows.append({
+                'EDC': edc,
+                'Activity': row['Activity'],
+                'Target': target,
+                'PMID': row['PMID'],
+                'Sentence': row['Sentence']
+            })
+    
+    return pd.DataFrame(expanded_rows)
 
-# Apply the splitting function to each column
-activity_df = split_column_to_rows(pivot_df, 'ACTIVITY')
-endocrine_df = split_column_to_rows(activity_df, 'ENDOCRINE_DISRUPTING_CHEMICAL')
-final_df = split_column_to_rows(endocrine_df, 'TARGET')
+# Apply the function to expand rows
+expanded_df = expand_rows(pivot_table)
 
-# Reset index for clean output
-final_df = final_df.reset_index(drop=True)
+# Drop duplicates based on EDC, Target, and PMID
+expanded_df_no_activity = expanded_df.drop_duplicates(subset=['EDC', 'Target', 'PMID'])
 
-# Ensure PMIDs are treated as strings
-final_df['PMID'] = final_df['PMID'].astype(str)
-
-# Group by the relevant columns to count occurrences and collect PMIDs
-interaction_summary = final_df.groupby(['ACTIVITY', 'ENDOCRINE_DISRUPTING_CHEMICAL', 'TARGET']).agg(
-    counts=('PMID', 'size'),
-    articles=('PMID', lambda x: ', '.join(x.unique()))
+# Group by EDC and Target to get counts and aggregate PMIDs
+interaction_summary = expanded_df_no_activity.groupby(['EDC', 'Target']).agg(
+    Count=('PMID', 'size'),
+    PMIDs=('PMID', lambda x: ', '.join(map(str, x)))
 ).reset_index()
 
-# Reorder the columns
-interaction_summary = interaction_summary[['ENDOCRINE_DISRUPTING_CHEMICAL', 'ACTIVITY', 'TARGET', 'counts', 'articles']]
+# Save the interaction summary to a CSV file
+interaction_summary.to_csv('interaction_summary.csv', index=False)
 
-# Save the DataFrame to a CSV file
-interaction_summary.to_csv('final_dataframe.csv', index=False)
+# Drop duplicates based on EDC, Target, PMID, and Activity
+expanded_df_with_activity = expanded_df.drop_duplicates(subset=['EDC', 'Target', 'PMID', 'Activity'])
 
-print("DataFrame saved to 'final_dataframe.csv'")
+# Group by EDC, Target, and Activity to get counts and aggregate PMIDs
+interaction_summary_with_activity = expanded_df_with_activity.groupby(['EDC', 'Target', 'Activity']).agg(
+    Count=('PMID', 'size'),
+    PMIDs=('PMID', lambda x: ', '.join(map(str, x)))
+).reset_index()
+
+# Rearrange columns to place Activity between EDC and Target
+interaction_summary_with_activity = interaction_summary_with_activity[['EDC', 'Activity', 'Target', 'Count', 'PMIDs']]
+
+# Save the summary with activity to a TSV file
+interaction_summary_with_activity.to_csv('interaction_summary_with_activity.tsv', sep='\t', index=False)
