@@ -1,2 +1,13 @@
 /venv/
 .idea
+.Rproj.user
+EDC_androgen_catalog.tsv
+EDC_estrogen_catalog.tsv
+EDC_catalog_deduct.tsv
+manual_catalog.tsv
+receptors.tsv
+standardized_edc_targets.tsv
+edc_vocabulary.tsv
+combined_edc_catalog.tsv
+combined_target_catalog.tsv
+standardized_receptors.tsv
