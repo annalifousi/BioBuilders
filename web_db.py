@@ -1,11 +1,9 @@
 from flask import Flask, request, render_template, jsonify
-from flask_cors import CORS
 import sqlite3
 import pandas as pd
 from sqlalchemy import create_engine
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS
 
 # Define database path
 db_path = 'ner_results.db'
@@ -15,26 +13,24 @@ def initialize_db():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    # Create or update the ner_entities table with the correct schema
+    # Create or update the interaction_summary table with the correct schema
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS ner_entities (
+    CREATE TABLE IF NOT EXISTS interaction_summary (
         endocrine_disrupting_chemical TEXT,
-        activity TEXT,
         target TEXT,
         counts INTEGER,
-        articles INTEGER
+        pmids TEXT
     )
     ''')
     
-    # Create or update the sentences table with the correct schema
+    # Create or update the interaction_summary_with_activity table with the correct schema
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS sentences (
-        activity TEXT,
+    CREATE TABLE IF NOT EXISTS interaction_summary_with_activity (
         endocrine_disrupting_chemical TEXT,
+        activity TEXT,
         target TEXT,
-        counts INTEGER,
-        articles INTEGER,
-        PRIMARY KEY (activity, endocrine_disrupting_chemical, target)
+        pmids TEXT,
+        sentences TEXT
     )
     ''')
     
@@ -49,19 +45,38 @@ initialize_db()
 def index():
     return render_template('index.html')
 
-# Route to handle search queries
+# Route to handle search queries in interaction_summary
 @app.route('/search', methods=['GET'])
 def search():
     query = request.args.get('query', '')
 
     conn = sqlite3.connect(db_path)
     query_str = """
-    SELECT * FROM sentences 
+    SELECT * FROM interaction_summary 
     WHERE endocrine_disrupting_chemical LIKE ? 
     OR target LIKE ?
-    ORDER BY endocrine_disrupting_chemical, activity, target
+    ORDER BY endocrine_disrupting_chemical, target
     """
     params = [f"%{query}%", f"%{query}%"]
+    df = pd.read_sql_query(query_str, conn, params=params)
+    conn.close()
+
+    return jsonify(df.to_dict(orient='records'))
+
+# Route to handle search queries in interaction_summary_with_activity
+@app.route('/search_activity', methods=['GET'])
+def search_activity():
+    query = request.args.get('query', '')
+
+    conn = sqlite3.connect(db_path)
+    query_str = """
+    SELECT * FROM interaction_summary_with_activity 
+    WHERE endocrine_disrupting_chemical LIKE ? 
+    OR target LIKE ?
+    OR activity LIKE ?
+    ORDER BY endocrine_disrupting_chemical, activity, target
+    """
+    params = [f"%{query}%", f"%{query}%", f"%{query}%"]
     df = pd.read_sql_query(query_str, conn, params=params)
     conn.close()
 
@@ -87,10 +102,10 @@ def upload_file():
         # Connect to the database and filter based on uploaded file
         query_placeholders = ','.join(['?'] * len(edcs_or_targets))
         query = f"""
-        SELECT * FROM sentences 
+        SELECT * FROM interaction_summary 
         WHERE endocrine_disrupting_chemical IN ({query_placeholders}) 
         OR target IN ({query_placeholders})
-        ORDER BY endocrine_disrupting_chemical, activity, target
+        ORDER BY endocrine_disrupting_chemical, target
         """
         conn = sqlite3.connect(db_path)
         params = edcs_or_targets * 2  # List should be twice the length for both placeholders
@@ -111,9 +126,9 @@ def network():
 
     conn = sqlite3.connect(db_path)
     query_str = """
-    SELECT * FROM sentences 
+    SELECT * FROM interaction_summary 
     WHERE target LIKE ?
-    ORDER BY endocrine_disrupting_chemical, activity, target
+    ORDER BY endocrine_disrupting_chemical, target
     """
     params = [f"%{target}%"]
     df = pd.read_sql_query(query_str, conn, params=params)

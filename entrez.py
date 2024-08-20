@@ -11,9 +11,11 @@ Entrez.email = 'annalifousi@gmail.com'
 Entrez.tool = 'Demoscript'
 
 
+##################
+# Data retrieval.#
+##################
 
-# Data retrieval. We convert the data retrieved from the pubmed in xml format and then load them in an xml file (articles_toool.xml)
-
+#  We convert the data retrieved from the pubmed in xml format and then load them in an xml file (articles_tool.xml)
 
 def search_entrez_and_save(query, xml_path, excel_path):
     # Searching for the query in Entrez
@@ -79,8 +81,9 @@ def parse_xml_to_csv(xml_path, csv_path):
     with open(xml_path, 'r', encoding='utf-8') as file:
         xml_content = file.read()
 
-
-#Web scraping procedure 
+##########################
+#Web scraping procedure ##
+##########################
 
     # Parse the XML content with BeautifulSoup
     soup = BeautifulSoup(xml_content, 'xml')
@@ -148,8 +151,9 @@ def parse_xml_to_csv(xml_path, csv_path):
     return pmc_count
 
 
-
-# Load the TSV files for the scrapping
+##########################################
+# Load the TSV files for the scrapping####
+##########################################
 
 # Read EDCs from androgen_EKDB.tsv file
 print("Reading EDCs from androgen_EKDB.tsv...")
@@ -157,7 +161,7 @@ androgen_df = pd.read_csv('EDC_androgen_catalog.tsv', sep='\t')
 edc_androgen_names = set(androgen_df['Name'].str.lower().unique())  # Get unique EDC names and convert to lowercase
 
 # Read EDCs from estrogen.tsv file from the EDKB database
-print("Reading EDCs from estrogen.tsv...")
+print("Reading EDCs from estrogen_EKDB...")
 estrogen_df = pd.read_csv('EDC_estrogen_catalog.tsv', sep='\t')
 edc_estrogen_names = set(estrogen_df['Name'].str.lower().unique())  # Get unique EDC names and convert to lowercase
 
@@ -221,8 +225,6 @@ edc_query = ' OR '.join([f'"{keyword}"[Title/Abstract]' for keyword in edc_keywo
 action_query = ' OR '.join([f'"{keyword}"[Title/Abstract]' for keyword in action_keywords])
 
 target_query = ' OR '.join([f'"{keyword}"[Title/Abstract]' for keyword in target_keywords])
-
-
 
 
 # MESH TERMS

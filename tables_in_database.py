@@ -44,29 +44,29 @@ def expand_rows(df):
 # Apply the function to expand rows
 expanded_df = expand_rows(pivot_table)
 
-# Drop duplicates based on EDC, Target, and PMID
-expanded_df_no_activity = expanded_df.drop_duplicates(subset=['EDC', 'Target', 'PMID'])
+# Drop duplicates based on EDC, Target, and PMID to ensure unique interactions per PMID
+expanded_df_no_activity = expanded_df.drop_duplicates(subset=['EDC', 'Target', 'PMID', 'Sentence'])
 
-# Group by EDC and Target to get counts and aggregate PMIDs
+# Group by EDC and Target to get counts of unique PMIDs and aggregate PMIDs (excluding Sentences)
 interaction_summary = expanded_df_no_activity.groupby(['EDC', 'Target']).agg(
-    Count=('PMID', 'size'),
+    Count=('PMID', 'nunique'),  # Count of unique PMIDs for each EDC-Target interaction
     PMIDs=('PMID', lambda x: ', '.join(map(str, x)))
 ).reset_index()
 
-# Save the interaction summary to a CSV file
-interaction_summary.to_csv('interaction_summary.csv', index=False)
+# Save the interaction summary to a TSV file
+interaction_summary.to_csv('interaction_summary.tsv', sep='\t', index=False)
 
 # Drop duplicates based on EDC, Target, PMID, and Activity
-expanded_df_with_activity = expanded_df.drop_duplicates(subset=['EDC', 'Target', 'PMID', 'Activity'])
+expanded_df_with_activity = expanded_df.drop_duplicates(subset=['EDC', 'Target', 'PMID', 'Activity', 'Sentence'])
 
-# Group by EDC, Target, and Activity to get counts and aggregate PMIDs
-interaction_summary_with_activity = expanded_df_with_activity.groupby(['EDC', 'Target', 'Activity']).agg(
-    Count=('PMID', 'size'),
-    PMIDs=('PMID', lambda x: ', '.join(map(str, x)))
+# Group by EDC, Target, and Activity to aggregate PMIDs and Sentences (without Count)
+interaction_summary_with_activity = expanded_df_with_activity.groupby(['EDC', 'Activity', 'Target']).agg(
+    PMIDs=('PMID', lambda x: ', '.join(map(str, x))),
+    Sentences=('Sentence', lambda x: ' || '.join(x))
 ).reset_index()
 
 # Rearrange columns to place Activity between EDC and Target
-interaction_summary_with_activity = interaction_summary_with_activity[['EDC', 'Activity', 'Target', 'Count', 'PMIDs']]
+interaction_summary_with_activity = interaction_summary_with_activity[['EDC', 'Activity', 'Target', 'PMIDs', 'Sentences']]
 
 # Save the summary with activity to a TSV file
 interaction_summary_with_activity.to_csv('interaction_summary_with_activity.tsv', sep='\t', index=False)

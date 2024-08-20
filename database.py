@@ -2,55 +2,69 @@ import sqlite3
 import pandas as pd
 from sqlalchemy import create_engine
 
-# Define database path
+# Define the path to the SQLite database
 db_path = 'ner_results.db'
 
-# Connect to SQLite database (or create it if it doesn't exist)
+# Create or connect to the SQLite database
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
-# Create or update the ner_entities table with the correct schema
+# Create tables with the correct schema
+# Adjusting based on the columns in the prepared dataframes
 cursor.execute('''
-CREATE TABLE IF NOT EXISTS ner_entities (
-    endocrine_disrupting_chemical TEXT,
-    activity TEXT,
-    target TEXT,
-    counts INTEGER,
-    articles INTEGER
-)
-''')
-
-# Create or update the sentences table with the correct schema
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS sentences (
-    activity TEXT,
+CREATE TABLE IF NOT EXISTS interaction_summary (
     endocrine_disrupting_chemical TEXT,
     target TEXT,
     counts INTEGER,
-    articles INTEGER,
-    PRIMARY KEY (activity, endocrine_disrupting_chemical, target)
+    pmids TEXT
 )
 ''')
 
-# Commit the changes and close the connection
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS interaction_summary_with_activity (
+    endocrine_disrupting_chemical TEXT,
+    activity TEXT,
+    target TEXT,
+    pmids TEXT,
+    sentences TEXT
+)
+''')
+
+# Commit the changes
 conn.commit()
 conn.close()
 
-# Load the CSV data
-file_path = 'final_dataframe.csv'
-df = pd.read_csv(file_path)
+# Reload and parse the TSV and CSV data correctly
+interaction_summary_df = pd.read_csv('interaction_summary.tsv', sep='\t')
+interaction_summary_with_activity_df = pd.read_csv('interaction_summary_with_activity.tsv', sep='\t')
 
-# Display the DataFrame to verify the content
-print(df.head())
+# Display the columns to verify correctness
+print("Columns in interaction_summary DataFrame:")
+print(interaction_summary_df.columns)
 
-# Prepare data for insertion into the sentences table
-sentences_df = df[['ACTIVITY', 'ENDOCRINE_DISRUPTING_CHEMICAL', 'TARGET', 'counts', 'articles']]
-sentences_df.columns = ['activity', 'endocrine_disrupting_chemical', 'target', 'counts', 'articles']
+print("Columns in interaction_summary_with_activity DataFrame:")
+print(interaction_summary_with_activity_df.columns)
+
+# Prepare data for insertion into the tables
+interaction_summary_prepared = interaction_summary_df[['EDC', 'Target', 'Count', 'PMIDs']]
+interaction_summary_prepared.columns = ['endocrine_disrupting_chemical', 'target', 'counts', 'pmids']
+
+interaction_summary_with_activity_prepared = interaction_summary_with_activity_df[['EDC', 'Activity', 'Target', 'PMIDs', 'Sentences']]
+interaction_summary_with_activity_prepared.columns = [
+    'endocrine_disrupting_chemical', 
+    'activity', 
+    'target', 
+    'pmids', 
+    'sentences'
+]
 
 # Create an SQLite database connection using SQLAlchemy
 engine = create_engine(f'sqlite:///{db_path}')
 
-# Insert data into the sentences table
-sentences_df.to_sql('sentences', engine, if_exists='replace', index=False)
+# Insert data into the interaction_summary table
+interaction_summary_prepared.to_sql('interaction_summary', engine, if_exists='replace', index=False)
+
+# Insert data into the interaction_summary_with_activity table
+interaction_summary_with_activity_prepared.to_sql('interaction_summary_with_activity', engine, if_exists='replace', index=False)
 
 print("Data inserted into the SQL database successfully.")

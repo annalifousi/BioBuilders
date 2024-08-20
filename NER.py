@@ -4,16 +4,54 @@ from spacy.pipeline import Sentencizer
 from scispacy.abbreviation import AbbreviationDetector
 import en_ner_bionlp13cg_md
 import en_ner_bc5cdr_md
+import zipfile
+import os
 
-# Load the models
+import spacy
+import zipfile
+import os
+
+# Function to unzip and load a spaCy model
+def load_model_from_zip(zip_file_path):
+    # Unzip the file to a temporary directory
+    model_dir = zip_file_path.replace('.zip', '')  # Create a directory name without the '.zip'
+    
+    # Check if the directory already exists (from a previous extraction)
+    if not os.path.exists(model_dir):
+        with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+            zip_ref.extractall(model_dir)
+    
+    # Check if meta.json exists in the immediate directory
+    meta_json_path = os.path.join(model_dir, 'meta.json')
+    
+    if not os.path.exists(meta_json_path):
+        # If meta.json is not found, check subdirectories
+        for root, dirs, files in os.walk(model_dir):
+            if 'meta.json' in files:
+                model_dir = root
+                break
+        else:
+            raise IOError(f"Could not find meta.json in {zip_file_path}")
+
+    # Load the model using spaCy
+    nlp_model = spacy.load(model_dir)
+    return nlp_model
+
 print("Loading models...")
-nlp_bi = en_ner_bionlp13cg_md.load()
-nlp_bc = en_ner_bc5cdr_md.load()
-nlp_custom = spacy.load('./model-best')  # Load your custom model here
-nlp_edc_custom = spacy.load('./EDC_target_model/output/EDC_model-best')
+
+# Load the pretrained spaCy models
+nlp_bi = spacy.load("en_ner_bionlp13cg_md")  # Pretrained SCISPACY NER model for biomedical entities
+nlp_bc = spacy.load("en_ner_bc5cdr_md")      # Pretrained SCISPACY NER model for biomedical entities
+
+# Load the custom models from zip files
+nlp_custom = load_model_from_zip('./model-best.zip')          # Custom model for entities that reveal ACTIVITY
+nlp_edc_custom = load_model_from_zip('./EDC_model-best.zip')  # Refined nlp_bi model to recognize EDCs and their molecular TARGETS
+
 print("Models loaded successfully.")
 
-# Add AbbreviationDetector to each model's pipeline
+
+
+# Add AbbreviationDetector to each model's pipeline to capture the abreviations and the long form of the entities
 print("Adding AbbreviationDetector...")
 for nlp in [nlp_bi, nlp_bc, nlp_custom]:
     nlp.add_pipe("abbreviation_detector")
@@ -25,7 +63,7 @@ if "sentencizer" not in nlp_custom.pipe_names:
     nlp_custom.add_pipe("sentencizer", before="ner")  # Add the sentencizer before the NER component
     print("Sentencizer added successfully.")
 
-# Function to perform NER and label terms
+# Function to perform NER and label the terms appropriately
 def ner(text, pmid, sentence_id, sentence_map, models):
     # Process the text with each model
     for model in models:
@@ -44,7 +82,7 @@ def ner(text, pmid, sentence_id, sentence_map, models):
             ent_label = ent.label_
             sentence_map[(pmid, sentence_id, ent_text)] = ent_label
 
-    # Annotate all terms with "UNKNOWN" if not already labeled
+    # Annotate all terms with "UNKNOWN" if not already labeled. We will have more words in the ner_data.csv because we keep all the keywords but this will help us with the post processing the filtering and the curation of the results of the NER
     doc_full = spacy.tokens.Doc(nlp_bi.vocab, words=[token.text.lower() for token in nlp_bi(text.lower()).doc])
     for token in doc_full:
         term = token.text.lower()
@@ -66,12 +104,12 @@ except Exception as e:
 
 print("CSV file read successfully.")
 df = df.fillna("")
-df_subset = df.head(200)
+df_subset = df.head(200) # this is the trial dataset.
 
 # Initialize a dictionary to store unique entities
 sentence_map = {}
 
-# Define models list
+# Define models list that we are going to perform the NER
 models = [nlp_bi, nlp_custom, nlp_edc_custom]
 
 # Iterate through each row in the DataFrame

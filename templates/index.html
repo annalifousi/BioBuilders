@@ -34,6 +34,50 @@
             padding: 8px;
             text-align: left;
         }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .details {
+            display: none;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        .show-details-btn {
+            margin-top: 10px;
+            cursor: pointer;
+            color: blue;
+            text-decoration: underline;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.21.0/cytoscape.min.js"></script>
 </head>
@@ -50,11 +94,19 @@
         <div class="results" id="results"></div> <!-- Results table container -->
     </div>
 
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <p id="modal-content"></p>
+        </div>
+    </div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
+        document.addEventListener('DOMContentLoaded', () => {
             const searchInput = document.getElementById('search-query');
             
-            searchInput.addEventListener('keydown', function(event) {
+            searchInput.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter') {
                     event.preventDefault(); // Prevent default action of Enter key (e.g., form submission)
                     performSearch(); // Call the performSearch function
@@ -64,7 +116,7 @@
 
         function performSearch() {
             const query = document.getElementById('search-query').value;
-            let url = `/search?query=${query}`;
+            let url = `/search_activity?query=${encodeURIComponent(query)}`;
 
             fetch(url)
                 .then(response => response.json())
@@ -103,14 +155,17 @@
             if (data.error) {
                 resultsDiv.innerHTML = `<p>${data.error}</p>`;
             } else {
-                let tableHtml = '<table><tr><th>EDC</th><th>Activity</th><th>Target</th><th>Counts</th><th>Articles</th></tr>';
-                data.forEach(row => {
+                let tableHtml = '<table><tr><th>EDC</th><th>Activity</th><th>Target</th><th>Articles</th><th>Details</th></tr>';
+                data.forEach((row, index) => {
                     tableHtml += `<tr>
                         <td>${row.endocrine_disrupting_chemical}</td>
                         <td>${row.activity}</td>
                         <td>${row.target}</td>
-                        <td>${row.counts}</td>
-                        <td>${row.articles}</td>
+                        <td>${row.pmids}</td>
+                        <td>
+                            <span class="show-details-btn" onclick="toggleDetails(${index})">Show Details</span>
+                            <div class="details" id="details-${index}" style="display: none;">${row.sentences}</div>
+                        </td>
                     </tr>`;
                 });
                 tableHtml += '</table>';
@@ -118,12 +173,25 @@
             }
         }
 
-        function createNetwork(target) {
-            fetch(`/network?target=${target}`)
+        function toggleDetails(index) {
+            const detailsDiv = document.getElementById(`details-${index}`);
+            const button = detailsDiv.previousElementSibling;
+
+            if (detailsDiv.style.display === 'none') {
+                detailsDiv.style.display = 'block';
+                button.textContent = 'Hide Details';
+            } else {
+                detailsDiv.style.display = 'none';
+                button.textContent = 'Show Details';
+            }
+        }
+
+        function createNetwork(query) {
+            fetch(`/network?target=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('cy').style.display = 'block';  // Show the visualization container
-                    var cy = cytoscape({
+                    cytoscape({
                         container: document.getElementById('cy'),
                         elements: {
                             nodes: data.nodes,
@@ -136,7 +204,7 @@
                                     'label': 'data(label)',
                                     'text-valign': 'center',
                                     'color': '#fff',
-                                    'background-color': 'mapData(counts, 0, 100, #ffcccc, #ff0000)', // Color gradient based on counts
+                                    'background-color': 'mapData(size, 0, 100, #ffcccc, #ff0000)', // Color gradient based on counts
                                     'text-outline-width': 2,
                                     'text-outline-color': '#0074D9',
                                     'width': 'mapData(size, 0, 100, 20, 80)',
@@ -161,6 +229,10 @@
                     });
                 })
                 .catch(error => console.error('Error:', error));
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
         }
     </script>
 </body>

@@ -1,13 +1,10 @@
 import pandas as pd
 import inflect
 import string
-import logging
 
-# Initialize logging
+#This steps belongs to the post processing after we have conducted the NER 
 
-# Initialize inflect engine
-p = inflect.engine()
-
+#account for the plurals also in the tsv files
 def get_plurals(word):
     plurals = set()
     plurals.add(word)
@@ -16,6 +13,7 @@ def get_plurals(word):
         plurals.add(plural)
     return plurals
 
+#load the tsv files 
 def load_terms(filename):
     try:
         df = pd.read_csv(filename, sep='\t')
@@ -38,7 +36,7 @@ receptor_terms = load_terms('combined_target_catalog.tsv')
 edc_alternatives = set([
     'endocrine disrupting chemicals', 'sex hormone disruptors', 'endocrine disrupting compounds', 
     'endocrine-disrupting chemicals', 'endocrine-disrupting compounds', 'hormone antagonist', 
-    'sex hormone antagonist', 'endocrine-disrupting contaminants'
+    'sex hormone antagonist', 'endocrine-disrupting contaminants',
 ])
 
 # Define target alternatives
@@ -77,7 +75,7 @@ def additional_conditions(entity):
         if len(words) > 1 and words[-2] in ['agonist', 'antagonist', 'agonists', 'antagonists', 'ligand', 'ligands']:
             return 'ENDOCRINE_DISRUPTING_CHEMICAL'
         return 'TARGET'
-    elif last_word in ['agonist', 'antagonist', 'agonists', 'antagonists', 'ligand', 'ligands']:
+    elif last_word in ['agonist', 'antagonist', 'agonists', 'antagonists', 'ligand', 'ligands','inhibitor','inhibitors','binder','binders]':
         return 'ENDOCRINE_DISRUPTING_CHEMICAL'
     return None
 
