@@ -9,7 +9,6 @@ Entrez.email = "annalifousi@gmail.com"
 # List of major sections we want to extract, excluding "methods"
 major_sections = ['introduction', 'results', 'discussion', 'conclusion']
 
-
 # Function to fetch full text from PMC using PMC IDs
 def fetch_pmc_data(pmc_ids):
     # Initialize counters
@@ -18,9 +17,9 @@ def fetch_pmc_data(pmc_ids):
     no_full_text_count = 0
 
     # Prepare CSV file to save the results
-    with open('pmc_full_texts_with_dois.csv', 'w', newline='', encoding='utf-8') as csvfile:
+    with open('pmc_sections.csv', 'w', newline='', encoding='utf-8') as csvfile:
         csvwriter = csv.writer(csvfile)
-        csvwriter.writerow(['PMC ID', 'DOI', 'Title', 'Authors', 'Publication Date', 'Full Article Text'])
+        csvwriter.writerow(['PMC ID', 'DOI', 'Title', 'Authors', 'Publication Date', 'Section', 'Article'])
 
         for pmc_id in pmc_ids:
             try:
@@ -54,8 +53,6 @@ def fetch_pmc_data(pmc_ids):
                 body = soup.find('body')
 
                 if body:
-                    # Initialize a variable to hold the full article text
-                    full_article_text = []
                     full_text_found = False
 
                     # Traverse each section within the body
@@ -66,25 +63,20 @@ def fetch_pmc_data(pmc_ids):
                         # Collect and store the text only if it's within a recognized major section
                         if any(keyword in section_name for keyword in major_sections) and "methods" not in section_name:
                             section_text = ' '.join([p.text for p in sec.find_all('p')])
-                            full_article_text.append(section_text)
                             full_text_found = True
 
-                    # Join all the collected section texts into one string
-                    if full_text_found:
-                        full_article_text = ' '.join(full_article_text)
-                    else:
-                        full_article_text = np.nan
+                            # Write the section as a separate record in the CSV
+                            record = [pmc_id, doi_text, title, authors_text, pub_date_text, section_name, section_text]
+                            csvwriter.writerow(record)
+                            print(record)
+
+                    if not full_text_found:
                         no_full_text_count += 1
 
-                    # Write the entire article as one record in the CSV
-                    record = [pmc_id, doi_text, title, authors_text, pub_date_text, full_article_text]
-                    csvwriter.writerow(record)
-                    print(record)
-
                 else:
-                    # If no body found, write a row with NaN in the "Full Article Text" column
+                    # If no body found, write a row with NaN in the "Section" and "Article" columns
                     no_full_text_count += 1
-                    record = [pmc_id, doi_text, title, authors_text, pub_date_text, np.nan]
+                    record = [pmc_id, doi_text, title, authors_text, pub_date_text, np.nan, np.nan]
                     csvwriter.writerow(record)
                     print(f"No body text for PMC ID: {pmc_id}. Recorded as NaN.")
 
@@ -102,7 +94,6 @@ def fetch_pmc_data(pmc_ids):
     print(f"Total successful retrievals: {successful_retrievals}")
     print(f"Total retrieval errors: {retrieval_errors}")
     print(f"Total articles without full text: {no_full_text_count}")
-
 
 # Step 1: Read PMC IDs from the CSV
 pmc_ids = []
